@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="icon.svg">
-  <title>Halzyn - IA Auto-Didata</title>
+  <title>Halzyn - IA Híbrida</title>
   <style>
     :root {
       --bg: #131314;
@@ -47,10 +47,7 @@
     }
 
     @media (max-width: 500px) {
-      #app-container {
-        border-left: none;
-        border-right: none;
-      }
+      #app-container { border-left: none; border-right: none; }
     }
 
     /* HEADER */
@@ -93,7 +90,7 @@
       transition: all 0.3s;
     }
 
-    /* SIDEBAR (Histórico e Menus) */
+    /* SIDEBAR */
     #sidebar {
       position: absolute;
       top: 0; left: -300px;
@@ -129,16 +126,10 @@
     .sidebar-item.active { background: rgba(168, 199, 250, 0.1); color: var(--accent); border-radius: 0 24px 24px 0; width: 90%; }
     
     .sidebar-divider { height: 1px; background: #333; margin: 10px 0; }
-    
     #historico-chats { flex: 1; overflow-y: auto; }
 
     /* ÁREA DO CHAT */
-    #tela-chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    #tela-chat { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
     #chat-box {
       flex: 1;
@@ -153,20 +144,9 @@
     .msg-wrapper.jogador { align-self: flex-end; }
     .msg-wrapper.ia { align-self: flex-start; }
 
-    .msg {
-      padding: 12px 16px;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      word-wrap: break-word;
-    }
-    .jogador .msg {
-      background: var(--surface);
-      border-radius: 20px 20px 4px 20px;
-    }
-    .ia .msg {
-      background: transparent; /* A IA não tem bolha igual na imagem */
-      padding-left: 0;
-    }
+    .msg { padding: 12px 16px; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; }
+    .jogador .msg { background: var(--surface); border-radius: 20px 20px 4px 20px; }
+    .ia .msg { background: transparent; padding-left: 0; }
     
     .sistema {
       font-size: 0.8rem; color: var(--warning);
@@ -176,60 +156,36 @@
       margin-bottom: 16px;
     }
 
-    /* INPUT INSPIRADO NA IMAGEM */
-    #input-container {
-      padding: 12px 16px 20px 16px;
-      background: var(--bg);
-    }
-
+    /* INPUT */
+    #input-container { padding: 12px 16px 20px 16px; background: var(--bg); }
     .input-box {
-      display: flex;
-      align-items: center;
-      background: var(--surface);
-      border-radius: 28px;
-      padding: 8px 8px 8px 16px;
-      gap: 8px;
+      display: flex; align-items: center; background: var(--surface);
+      border-radius: 28px; padding: 8px 8px 8px 16px; gap: 8px;
     }
-
     .input-box input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-primary);
-      font-size: 1rem;
-      outline: none;
+      flex: 1; background: transparent; border: none;
+      color: var(--text-primary); font-size: 1rem; outline: none;
     }
-
     .input-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 1.2rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px; height: 40px;
-      border-radius: 50%;
+      background: transparent; border: none; color: var(--text-secondary);
+      font-size: 1.2rem; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;
     }
     .input-btn:hover { background: rgba(255,255,255,0.05); }
 
-    /* TELA DE CONFIGURAÇÃO / MEMÓRIA */
+    /* TELA DE CONFIGURAÇÕES */
     #tela-config {
-      display: none;
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--bg);
-      z-index: 30;
-      flex-direction: column;
+      display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg); z-index: 30; flex-direction: column;
     }
-    
-    .config-header {
-      padding: 16px; display: flex; align-items: center; gap: 16px;
-      border-bottom: 1px solid #333;
-    }
-
+    .config-header { padding: 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #333; }
     .config-content { padding: 20px; overflow-y: auto; flex: 1; }
+
+    .config-section {
+      background: var(--surface); padding: 15px; border-radius: 12px;
+      margin-bottom: 20px; border: 1px solid #333;
+    }
+    .config-section h4 { margin-top: 0; margin-bottom: 12px; color: var(--accent); }
 
     .btn-acao {
       background: var(--surface); color: var(--text-primary);
@@ -237,12 +193,14 @@
       cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;
     }
     .btn-acao:hover { background: #333; }
-    
     .btn-primary { background: var(--accent); color: #000; border: none; }
     .btn-primary:hover { background: #8ab4f8; }
 
-    .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-
+    .campo-texto, select {
+      width: 100%; background: #131314; border: 1px solid #333;
+      color: #fff; padding: 10px; border-radius: 8px; margin-bottom: 10px;
+    }
+    
     .config-item {
       background: var(--surface); padding: 12px; border-radius: 8px;
       margin-bottom: 10px; border: 1px solid #333;
@@ -252,6 +210,12 @@
       border-radius: 12px; margin-left: 8px; text-transform: uppercase; font-weight: bold;
     }
   </style>
+
+  <!-- MÓDULO WEBELLM PARA RODAR LLAMA OFFLINE NO NAVEGADOR -->
+  <script type="module">
+    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+    window.webllm = webllm;
+  </script>
 </head>
 <body>
 
@@ -264,12 +228,10 @@
         <span style="font-size: 1.2rem;">+</span> Novo Chat
       </div>
       <div class="sidebar-divider"></div>
-      <div id="historico-chats">
-        <!-- Lista de chats será gerada aqui -->
-      </div>
+      <div id="historico-chats"></div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-item" onclick="abrirConfig()">
-        <span>⚙️</span> Memória (Config)
+        <span>⚙️</span> Configurações / Memória
       </div>
     </div>
 
@@ -297,25 +259,50 @@
       </div>
     </div>
 
-    <!-- TELA DE CONFIGURAÇÃO / MEMÓRIA -->
+    <!-- TELA DE CONFIGURAÇÕES -->
     <div id="tela-config">
       <div class="config-header">
         <button class="header-btn" onclick="fecharConfig()">←</button>
-        <h3>Cérebro da Halzyn</h3>
+        <h3>Configurações do Sistema</h3>
       </div>
 
       <div class="config-content">
-        <div class="action-bar">
-          <button class="btn-acao" onclick="exportarMemoria()">📤 Exportar (.hpma)</button>
-          <button class="btn-acao" onclick="document.getElementById('file-import').click()">📥 Importar (.hpma)</button>
-          <input type="file" id="file-import" accept=".hpma" style="display: none;" onchange="importarMemoria(event)" />
+        <!-- SELEÇÃO DO MOTOR DE IA -->
+        <div class="config-section">
+          <h4>🤖 Selecionar Motor de IA</h4>
+          <select id="select-motor" onchange="alterarMotor()">
+            <option value="hpma">Privado Offline (Nativo .hpma)</option>
+            <option value="gemini">API Online (Google Gemini)</option>
+            <option value="llama_local">Offline GPU Local (Llama 3 / WebLLM)</option>
+          </select>
+
+          <!-- Configurações para Gemini -->
+          <div id="config-gemini" style="display: none;">
+            <label style="font-size: 0.8rem; color: var(--text-secondary);">Chave de API Gemini:</label>
+            <input type="password" id="gemini-api-key" class="campo-texto" placeholder="AIzaSy..." onchange="salvarConfigsLocais()" />
+          </div>
+
+          <!-- Configurações para Llama Local -->
+          <div id="config-llama" style="display: none;">
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">Requer WebGPU e fará o download do modelo (~1.5GB) na primeira execução.</p>
+            <button class="btn-acao btn-primary" onclick="carregarLlamaLocal()">Baixar e Inicializar Llama</button>
+            <div id="llama-status" style="font-size: 0.8rem; margin-top: 8px; color: var(--warning);"></div>
+          </div>
         </div>
 
-        <h4>Ensinar Manualmente</h4>
-        <div style="background: var(--surface); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-          <input type="text" id="add-frase" placeholder="Se eu disser..." style="background:#131314; border:1px solid #333; color:#fff; padding:10px; border-radius:8px;" />
-          <input type="text" id="add-resposta" placeholder="Você responde..." style="background:#131314; border:1px solid #333; color:#fff; padding:10px; border-radius:8px;" />
-          <select id="add-emocao" style="background:#131314; border:1px solid #333; color:#fff; padding:10px; border-radius:8px;">
+        <!-- REGRAS E MEMÓRIA NATIVA (.HPMA) -->
+        <div class="config-section" id="secao-memoria-hpma">
+          <h4>🧠 Memória Nativa (.hpma)</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button class="btn-acao" onclick="exportarMemoria()">📤 Exportar (.hpma)</button>
+            <button class="btn-acao" onclick="document.getElementById('file-import').click()">📥 Importar (.hpma)</button>
+            <input type="file" id="file-import" accept=".hpma" style="display: none;" onchange="importarMemoria(event)" />
+          </div>
+
+          <p style="font-size: 0.85rem; font-weight: bold;">Ensinar Manualmente:</p>
+          <input type="text" id="add-frase" class="campo-texto" placeholder="Se eu disser..." />
+          <input type="text" id="add-resposta" class="campo-texto" placeholder="Você responde..." />
+          <select id="add-emocao" class="campo-texto">
             <option value="feliz">Feliz</option>
             <option value="triste">Triste</option>
             <option value="raiva">Raiva</option>
@@ -324,11 +311,11 @@
             <option value="rude">Rude</option>
             <option value="vulgar">Vulgar</option>
           </select>
-          <button class="btn-acao btn-primary" style="justify-content:center;" onclick="salvarManual()">Adicionar Regra</button>
-        </div>
+          <button class="btn-acao btn-primary" style="width: 100%; justify-content:center;" onclick="salvarManual()">Adicionar Regra</button>
 
-        <h4 style="margin-top: 20px;">Memória Atual</h4>
-        <div id="lista-memoria"></div>
+          <h5 style="margin-top: 20px;">Memória Gravada:</h5>
+          <div id="lista-memoria"></div>
+        </div>
       </div>
     </div>
 
@@ -336,25 +323,25 @@
 
   <script>
     /* =========================================================
-       SISTEMA DE ARMAZENAMENTO E DADOS
+       GERENCIAMENTO DE ESTADO E PERSISTÊNCIA
        ========================================================= */
-
-    // Banco de Conhecimento (Memória)
     let bancoDeDados = JSON.parse(localStorage.getItem("halzyn_memoria")) || [
       { frase: "oi", resposta: "Olá! Como você está?", emocao: "feliz" },
       { frase: "tudo bem", resposta: "Tudo ótimo, e com você?", emocao: "animado" }
     ];
 
-    // Histórico de Chats (Conversas salvas)
     let chats = JSON.parse(localStorage.getItem("halzyn_chats")) || [];
     let currentChatId = localStorage.getItem("halzyn_current_chat_id") || null;
-
-    // A inicialização do primeiro chat foi movida para o final do arquivo para evitar ReferenceError
+    
+    let motorAtual = localStorage.getItem("halzyn_motor") || "hpma";
+    let geminiKey = localStorage.getItem("halzyn_gemini_key") || "";
 
     function salvarDadosGerais() {
       localStorage.setItem("halzyn_memoria", JSON.stringify(bancoDeDados));
       localStorage.setItem("halzyn_chats", JSON.stringify(chats));
       localStorage.setItem("halzyn_current_chat_id", currentChatId);
+      localStorage.setItem("halzyn_motor", motorAtual);
+      localStorage.setItem("halzyn_gemini_key", geminiKey);
     }
 
     function getChatAtual() {
@@ -362,36 +349,26 @@
     }
 
     /* =========================================================
-       O MOTOR DA IA HALZYN
+       MOTOR NATIVO (.HPMA)
        ========================================================= */
     class HalzynIA {
       constructor() {
-        this.humor = 50; 
         this.estado = "Neutra";
-        
-        // Estado de Aprendizado
         this.modoEnsino = false;
         this.fraseDesconhecida = "";
         this.respostaProposta = "";
         this.passoEnsino = 0; 
-        
-        // Controle de Repetição (Imitação)
         this.ultimaFraseUsuario = "";
         this.contagemRepeticao = 0;
       }
 
       alterarEmocao(emocaoTag) {
         switch(emocaoTag) {
-          case "feliz": case "animado": 
-            this.estado = "Feliz"; break;
-          case "triste": 
-            this.estado = "Triste"; break;
-          case "raiva": case "rude": case "vulgar": 
-            this.estado = "Raiva"; break;
-          case "curiosa":
-            this.estado = "Curiosa"; break;
-          default:
-            this.estado = "Neutra";
+          case "feliz": case "animado": this.estado = "Feliz"; break;
+          case "triste": this.estado = "Triste"; break;
+          case "raiva": case "rude": case "vulgar": this.estado = "Raiva"; break;
+          case "curiosa": this.estado = "Curiosa"; break;
+          default: this.estado = "Neutra";
         }
         this.atualizarUI();
       }
@@ -399,27 +376,21 @@
       processar(textoJogador) {
         const fLimpa = textoJogador.toLowerCase().trim();
 
-        // 1. Lógica de Repetição (Imitação)
         if (!this.modoEnsino) {
-          if (fLimpa === this.ultimaFraseUsuario) {
-            this.contagemRepeticao++;
-          } else {
-            this.ultimaFraseUsuario = fLimpa;
-            this.contagemRepeticao = 1;
-          }
+          if (fLimpa === this.ultimaFraseUsuario) { this.contagemRepeticao++; } 
+          else { this.ultimaFraseUsuario = fLimpa; this.contagemRepeticao = 1; }
 
           if (this.contagemRepeticao >= 3) {
             this.alterarEmocao("curiosa");
-            return textoJogador; // A IA imita o usuário
+            return textoJogador;
           }
         }
 
-        // 2. Modo de Ensino
         if (this.modoEnsino) {
           if (this.passoEnsino === 1) {
             this.respostaProposta = textoJogador;
             this.passoEnsino = 2;
-            return `Certo, responderei "${textoJogador}". E o que isso deveria me causar? (feliz, triste, raiva, rude, vulgar, animado, neutro)`;
+            return `Certo, responderei "${textoJogador}". Qual a emoção? (feliz, triste, raiva, rude, vulgar, animado, neutro)`;
           } 
           else if (this.passoEnsino === 2) {
             const emocao = fLimpa;
@@ -440,17 +411,13 @@
           }
         }
 
-        // 3. Busca de Respostas no Banco de Dados
-        // Usamos .filter() para pegar TODAS as respostas que batem com a frase
         const lembrancas = bancoDeDados.filter(item => fLimpa === item.frase.toLowerCase().trim() || fLimpa.includes(item.frase.toLowerCase()));
 
         if (lembrancas.length > 0) {
-          // Se encontrou, escolhe uma aleatoriamente para não ficar repetitiva
           const lembrancaEscolhida = lembrancas[Math.floor(Math.random() * lembrancas.length)];
           this.alterarEmocao(lembrancaEscolhida.emocao);
           return lembrancaEscolhida.resposta;
         } else {
-          // Ela não sabe o que fazer.
           this.modoEnsino = true;
           this.passoEnsino = 1;
           this.fraseDesconhecida = fLimpa;
@@ -461,29 +428,119 @@
 
       atualizarUI() {
         const indicador = document.getElementById('indicador-emocao');
-        if (this.estado === "Raiva") {
-          indicador.style.background = 'var(--danger)'; indicador.style.boxShadow = '0 0 10px var(--danger)';
-        } else if (this.estado === "Feliz") {
-          indicador.style.background = 'var(--success)'; indicador.style.boxShadow = '0 0 10px var(--success)';
-        } else if (this.estado === "Triste") {
-          indicador.style.background = '#8ab4f8'; indicador.style.boxShadow = '0 0 10px #8ab4f8';
-        } else if (this.estado === "Curiosa") {
-          indicador.style.background = 'var(--warning)'; indicador.style.boxShadow = '0 0 10px var(--warning)';
-        } else {
-          indicador.style.background = 'var(--accent)'; indicador.style.boxShadow = '0 0 10px var(--accent)';
-        }
+        if (this.estado === "Raiva") { indicador.style.background = 'var(--danger)'; indicador.style.boxShadow = '0 0 10px var(--danger)'; } 
+        else if (this.estado === "Feliz") { indicador.style.background = 'var(--success)'; indicador.style.boxShadow = '0 0 10px var(--success)'; } 
+        else if (this.estado === "Triste") { indicador.style.background = '#8ab4f8'; indicador.style.boxShadow = '0 0 10px #8ab4f8'; } 
+        else if (this.estado === "Curiosa") { indicador.style.background = 'var(--warning)'; indicador.style.boxShadow = '0 0 10px var(--warning)'; } 
+        else { indicador.style.background = 'var(--accent)'; indicador.style.boxShadow = '0 0 10px var(--accent)'; }
       }
     }
 
     const halzyn = new HalzynIA();
 
     /* =========================================================
-       INTERFACE DE CHAT E HISTÓRICO
+       MOTORES EXTERNOS: GEMINI API E WEBELLM (LLAMA OFFLINE)
+       ========================================================= */
+    let webLlamaEngine = null;
+
+    async function chamarAPI_Gemini(prompt) {
+      if (!geminiKey) return "Erro: Insira uma Chave de API do Gemini nas Configurações.";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+      
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text;
+      } catch (e) {
+        return "Erro ao conectar com a API do Gemini. Verifique sua chave ou conexão.";
+      }
+    }
+
+    async function carregarLlamaLocal() {
+      const status = document.getElementById("llama-status");
+      status.textContent = "Carregando motor WebGPU...";
+
+      try {
+        if (!window.webllm) {
+          status.textContent = "Erro: WebLLM não foi carregado corretamente.";
+          return;
+        }
+
+        // Modelo ultra leve recomendado para rodar direto no navegador
+        const selectedModel = "Llama-3.2-1B-Instruct-q4f16_1-MLC"; 
+        
+        webLlamaEngine = await window.webllm.CreateMLCEngine(selectedModel, {
+          initProgressCallback: (report) => {
+            status.textContent = report.text;
+          }
+        });
+        status.textContent = "Llama carregado e pronto para uso Offline!";
+      } catch (err) {
+        status.textContent = "Erro ao carregar Llama: Seu navegador suporta WebGPU?";
+        console.error(err);
+      }
+    }
+
+    async function chamarLlamaLocal(prompt) {
+      if (!webLlamaEngine) {
+        return "O modelo Llama ainda não foi inicializado. Acesse as Configurações e clique em 'Baixar e Inicializar Llama'.";
+      }
+      const reply = await webLlamaEngine.chat.completions.create({
+        messages: [{ role: "user", content: prompt }]
+      });
+      return reply.choices[0].message.content;
+    }
+
+    /* =========================================================
+       ROUTING DE ENVIO E ATUALIZAÇÃO DA TELA
+       ========================================================= */
+    async function enviar() {
+      const inputField = document.getElementById('entrada');
+      const texto = inputField.value.trim();
+      if (!texto) return;
+
+      const chat = getChatAtual();
+      chat.messages.push({ texto: texto, tipo: 'jogador' });
+
+      if (chat.messages.length === 1 || chat.title === "Nova Conversa") {
+        chat.title = texto.substring(0, 20) + (texto.length > 20 ? "..." : "");
+        renderizarSidebarChats();
+      }
+
+      adicionarMensagemDOM(texto, 'jogador');
+      inputField.value = '';
+
+      let resposta = "";
+      let tipoMsg = "ia";
+
+      if (motorAtual === "hpma") {
+        resposta = halzyn.processar(texto);
+        if (halzyn.modoEnsino || resposta.includes("Regra gravada")) tipoMsg = "sistema";
+      } 
+      else if (motorAtual === "gemini") {
+        adicionarMensagemDOM("Pensando via Gemini...", "sistema");
+        resposta = await chamarAPI_Gemini(texto);
+      } 
+      else if (motorAtual === "llama_local") {
+        adicionarMensagemDOM("Processando na GPU local...", "sistema");
+        resposta = await chamarLlamaLocal(texto);
+      }
+
+      chat.messages.push({ texto: resposta, tipo: tipoMsg });
+      salvarDadosGerais();
+      adicionarMensagemDOM(resposta, tipoMsg);
+    }
+
+    /* =========================================================
+       FUNÇÕES AUXILIARES DA INTERFACE
        ========================================================= */
     function criarNovoChat(forcarRender = true) {
       const novoId = 'chat_' + Date.now();
-      const novoChat = { id: novoId, title: "Nova Conversa", messages: [] };
-      chats.unshift(novoChat);
+      chats.unshift({ id: novoId, title: "Nova Conversa", messages: [] });
       currentChatId = novoId;
       
       halzyn.modoEnsino = false;
@@ -495,7 +552,7 @@
       if(forcarRender) {
         renderizarSidebarChats();
         carregarChatAtual();
-        toggleSidebar(); // Fecha a sidebar se tiver aberta
+        toggleSidebar();
       }
     }
 
@@ -513,11 +570,10 @@
       chatBox.innerHTML = '';
       
       const chat = getChatAtual();
-      if (chat.messages.length === 0) {
-        // Mensagem padrão de boas vindas
+      if (!chat || chat.messages.length === 0) {
         const div = document.createElement('div');
         div.className = 'msg sistema';
-        div.textContent = "Halzyn pronta. Ensine-a falando algo novo.";
+        div.textContent = `Motor atual: ${motorAtual.toUpperCase()}. Digite para conversar.`;
         chatBox.appendChild(div);
       } else {
         chat.messages.forEach(m => adicionarMensagemDOM(m.texto, m.tipo));
@@ -536,35 +592,6 @@
         div.onclick = () => carregarChat(chat.id);
         lista.appendChild(div);
       });
-    }
-
-    function enviar() {
-      const inputField = document.getElementById('entrada');
-      const texto = inputField.value.trim();
-      if (!texto) return;
-
-      // Salva mensagem do jogador
-      const chat = getChatAtual();
-      chat.messages.push({ texto: texto, tipo: 'jogador' });
-      
-      // Se for a primeira mensagem, renomeia o título do chat
-      if (chat.messages.length === 1 || chat.title === "Nova Conversa") {
-        chat.title = texto.substring(0, 20) + (texto.length > 20 ? "..." : "");
-        renderizarSidebarChats();
-      }
-
-      adicionarMensagemDOM(texto, 'jogador');
-      inputField.value = '';
-
-      setTimeout(() => {
-        const resposta = halzyn.processar(texto);
-        
-        let tipoMsg = (halzyn.modoEnsino || resposta.includes("Regra gravada")) ? 'sistema' : 'ia';
-        chat.messages.push({ texto: resposta, tipo: tipoMsg });
-        salvarDadosGerais();
-        
-        adicionarMensagemDOM(resposta, tipoMsg);
-      }, 300);
     }
 
     function adicionarMensagemDOM(texto, tipo) {
@@ -587,8 +614,21 @@
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    function alterarMotor() {
+      motorAtual = document.getElementById("select-motor").value;
+      salvarDadosGerais();
+
+      document.getElementById("config-gemini").style.display = motorAtual === "gemini" ? "block" : "none";
+      document.getElementById("config-llama").style.display = motorAtual === "llama_local" ? "block" : "none";
+    }
+
+    function salvarConfigsLocais() {
+      geminiKey = document.getElementById("gemini-api-key").value;
+      salvarDadosGerais();
+    }
+
     /* =========================================================
-       IMPORTAR E EXPORTAR ARQUIVOS .HPMA
+       IMPORTAR / EXPORTAR .HPMA
        ========================================================= */
     function exportarMemoria() {
       const dataStr = JSON.stringify(bancoDeDados, null, 2);
@@ -613,41 +653,34 @@
         try {
           const conteudo = JSON.parse(e.target.result);
           if (Array.isArray(conteudo)) {
-            if (confirm(`Esse arquivo contém ${conteudo.length} memórias. Deseja substituir a memória atual da Halzyn por esta?`)) {
+            if (confirm(`Substituir memória atual por esta com ${conteudo.length} itens?`)) {
               bancoDeDados = conteudo;
               salvarDadosGerais();
               renderizarMemoria();
-              alert("Memória importada com sucesso!");
+              alert("Memória importada!");
             }
-          } else {
-            alert("Arquivo .hpma inválido.");
           }
         } catch (err) {
-          alert("Erro ao ler o arquivo. Tem certeza que é um arquivo da Halzyn?");
+          alert("Erro ao ler o arquivo .hpma");
         }
       };
       reader.readAsText(file);
-      event.target.value = ''; // reseta o input
+      event.target.value = '';
     }
 
-    /* =========================================================
-       NAVEGAÇÃO E CONFIGURAÇÃO
-       ========================================================= */
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
       const over = document.getElementById('sidebar-overlay');
-      if (sb.classList.contains('open')) {
-        sb.classList.remove('open');
-        over.classList.remove('open');
-      } else {
-        sb.classList.add('open');
-        over.classList.add('open');
-      }
+      sb.classList.toggle('open');
+      over.classList.toggle('open');
     }
 
     function abrirConfig() {
       toggleSidebar();
       renderizarMemoria();
+      document.getElementById("select-motor").value = motorAtual;
+      document.getElementById("gemini-api-key").value = geminiKey;
+      alterarMotor();
       document.getElementById('tela-config').style.display = 'flex';
     }
     
@@ -662,7 +695,7 @@
       bancoDeDados.forEach((item, index) => {
         let corBg = "var(--accent)"; let corTxt = "#000";
         if (item.emocao === "feliz" || item.emocao === "animado") { corBg = "var(--success)"; }
-        if (item.emocao === "raiva" || item.emocao === "rude" || item.emocao === "vulgar" || item.emocao === "ofendida") { corBg = "var(--danger)"; }
+        if (["raiva", "rude", "vulgar"].includes(item.emocao)) { corBg = "var(--danger)"; }
         if (item.emocao === "triste") { corBg = "#8ab4f8"; }
 
         const div = document.createElement('div');
@@ -684,7 +717,7 @@
       const resposta = document.getElementById('add-resposta').value.trim();
       const emocao = document.getElementById('add-emocao').value;
 
-      if (!frase || !resposta) { alert("Preencha a frase e a resposta!"); return; }
+      if (!frase || !resposta) return alert("Preencha a frase e a resposta!");
 
       bancoDeDados.push({ frase: frase.toLowerCase(), resposta, emocao });
       salvarDadosGerais();
@@ -716,15 +749,11 @@
     
     halzyn.atualizarUI();
 
-    // Registro do Service Worker para PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => {
-          console.log('Falha ao registrar Service Worker:', err);
-        });
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Erro:', err));
       });
     }
-
   </script>
 </body>
 </html>
