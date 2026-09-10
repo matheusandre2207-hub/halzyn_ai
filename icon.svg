@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512">
+  <filter id="invert">
+    <feColorMatrix type="matrix" values="-1  0  0  0  1
+                                          0 -1  0  0  1
+                                          0  0 -1  0  1
+                                          0  0  0  1  0" />
+  </filter>
+  <image href="icon.png" width="100%" height="100%" filter="url(#invert)" />
+</svg>
