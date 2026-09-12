@@ -1,11 +1,11 @@
 {
-  "name": "Halzyn IA",
+  "name": "Halzyn",
   "short_name": "Halzyn",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#131314",
-  "theme_color": "#131314",
-  "description": "IA Auto-Didata com Memória Privada",
+  "background_color": "#0E0F10",
+  "theme_color": "#0E0F10",
+  "description": "Assistente local com memória, cálculo preciso e contexto persistente.",
   "icons": [
     {
       "src": "icon.svg",
