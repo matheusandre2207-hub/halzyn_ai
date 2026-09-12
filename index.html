@@ -46,7 +46,6 @@
     }
     svg { display: block; flex-shrink: 0; }
 
-    /* SCROLLBAR */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
@@ -106,7 +105,6 @@
     .search-wrap input::placeholder { color: var(--muted); }
     #lista-chats { flex: 1; overflow-y: auto; padding: 4px 6px 10px; }
 
-    /* chat row */
     .chat-row {
       display: grid; grid-template-columns: minmax(0, 1fr) 34px;
       align-items: center; gap: 2px;
@@ -146,23 +144,90 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    /* motor badge */
+    /* ── MOTOR BADGE (clicável) ─────────────── */
     .motor-badge {
       font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
       padding: 3px 8px; border-radius: 999px;
       background: var(--surface-2); color: var(--muted);
       border: 1px solid var(--line); text-transform: uppercase;
+      cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+      position: relative; user-select: none;
     }
+    .motor-badge:hover { background: var(--surface); color: var(--text); border-color: var(--accent); }
     .motor-badge.ai { background: rgba(143,176,216,0.14); color: var(--accent); border-color: rgba(143,176,216,0.3); }
+    .motor-badge.ai:hover { background: rgba(143,176,216,0.22); }
+
+    /* ── MODEL PICKER DROPDOWN ──────────────── */
+    #model-picker {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      min-width: 260px;
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+      z-index: 100;
+      overflow: hidden;
+      animation: picker-in 0.15s ease-out;
+    }
+    #model-picker.open { display: block; }
+    @keyframes picker-in {
+      from { opacity: 0; transform: translateY(6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .picker-header {
+      padding: 10px 14px 6px;
+      font-size: 10px; font-weight: 750; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--line);
+    }
+    .picker-section { padding: 6px 0; }
+    .picker-section + .picker-section { border-top: 1px solid var(--line); }
+    .picker-section-label {
+      padding: 4px 14px 2px;
+      font-size: 9.5px; font-weight: 750; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .picker-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 14px; cursor: pointer;
+      transition: background 0.1s;
+      border: none; background: transparent; width: 100%; text-align: left;
+    }
+    .picker-item:hover { background: var(--surface); }
+    .picker-item.active { background: var(--accent-dim); }
+    .picker-item .pi-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface-2); flex-shrink: 0;
+      font-size: 13px;
+    }
+    .picker-item .pi-info { min-width: 0; flex: 1; }
+    .picker-item .pi-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+    .picker-item .pi-desc { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .picker-item .pi-check { color: var(--accent); flex-shrink: 0; }
+    .picker-item .pi-tag {
+      font-size: 9px; font-weight: 750; letter-spacing: 0.06em;
+      padding: 2px 5px; border-radius: 4px; text-transform: uppercase;
+    }
+    .pi-tag.downloaded { background: rgba(122,170,138,0.18); color: var(--ok); }
+    .pi-tag.loading { background: rgba(201,176,112,0.18); color: var(--warn); }
+    .pi-tag.cloud { background: rgba(143,176,216,0.15); color: var(--accent); }
+    #model-picker-anchor { position: relative; }
 
     /* chat area */
     #chat-box {
       flex: 1; overflow-y: auto; padding: 26px 28px 16px;
       display: flex; flex-direction: column; gap: 14px;
+      /* GPU-accelerated scroll para mobile */
+      -webkit-overflow-scrolling: touch;
+      will-change: scroll-position;
     }
 
     /* messages */
-    .msg-wrap { display: flex; max-width: min(78%, 700px); animation: msg-in 0.22s ease-out; }
+    .msg-wrap { display: flex; flex-direction: column; max-width: min(78%, 700px); }
     .msg-wrap.jogador { align-self: flex-end; }
     .msg-wrap.ia { align-self: flex-start; }
     @keyframes msg-in {
@@ -178,11 +243,13 @@
       background: #243244;
       border-radius: 18px 18px 5px 18px;
       color: #e8f0f8;
+      animation: msg-in 0.18s ease-out;
     }
     .ia .bubble {
       background: transparent;
       padding: 3px 1px;
       color: var(--text);
+      animation: msg-in 0.18s ease-out;
     }
     .ia .bubble.streaming::after {
       content: "";
@@ -192,6 +259,27 @@
       animation: caret 0.85s steps(1) infinite;
     }
     @keyframes caret { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+    /* ── BOTÕES DE AÇÃO NAS MENSAGENS ────────── */
+    .msg-actions {
+      display: flex; gap: 4px; margin-top: 4px;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .msg-wrap:hover .msg-actions,
+    .msg-wrap:focus-within .msg-actions { opacity: 1; }
+    /* no mobile mostra sempre */
+    @media (max-width: 820px) {
+      .msg-actions { opacity: 1; }
+    }
+    .msg-action-btn {
+      height: 26px; padding: 0 8px; border-radius: 7px;
+      font-size: 11px; font-weight: 600; border: 1px solid var(--line);
+      background: var(--bg-elev); color: var(--muted);
+      display: flex; align-items: center; gap: 4px;
+      transition: background 0.12s, color 0.12s;
+    }
+    .msg-action-btn:hover { background: var(--surface-2); color: var(--text); }
+    .msg-action-btn.copied { color: var(--ok); border-color: var(--ok); }
 
     /* status typing */
     .status-bubble {
@@ -207,7 +295,6 @@
     }
     @keyframes pulse { 0%,100%{opacity:.3;transform:scale(.85)} 50%{opacity:1;transform:scale(1.2)} }
 
-    /* notice */
     .notice {
       align-self: center; text-align: center; max-width: 400px;
       font-size: 12.5px; color: var(--warn);
@@ -216,7 +303,6 @@
       padding: 8px 16px; border-radius: 999px;
     }
 
-    /* code */
     .code-block {
       margin: 6px 0; padding: 10px 14px; border-radius: 10px;
       background: #090a0c; border: 1px solid var(--line);
@@ -227,8 +313,6 @@
       font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
       color: var(--muted); text-transform: uppercase; margin-bottom: 4px;
     }
-
-    /* markdown-lite */
     .ia .bubble strong { font-weight: 700; color: var(--accent-2); }
     .ia .bubble em { font-style: italic; }
 
@@ -253,10 +337,13 @@
       width: 36px; height: 36px; border: none; border-radius: 10px;
       background: var(--accent); color: #0b0c0e;
       display: flex; align-items: center; justify-content: center;
-      transition: filter 0.15s, opacity 0.15s;
+      transition: filter 0.15s, opacity 0.15s, background 0.15s;
+      flex-shrink: 0;
     }
     #btn-enviar:hover:not(:disabled) { filter: brightness(1.1); }
     #btn-enviar:disabled { opacity: 0.35; }
+    #btn-enviar.stop-mode { background: var(--danger); }
+    #btn-enviar.stop-mode:hover { filter: brightness(1.12); }
 
     /* ── CONFIG ────────────────────────────────── */
     #tela-config {
@@ -303,7 +390,6 @@
     }
     .overlay.open { display: block; }
 
-    /* ── API KEY banner ───────────────────── */
     .api-banner {
       background: rgba(143,176,216,0.08); border: 1px solid rgba(143,176,216,0.22);
       border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
@@ -311,7 +397,6 @@
     }
     .api-banner a { color: var(--accent); }
 
-    /* ── LLAMA PROGRESS ───────────────────── */
     .progress-track {
       width: 100%; height: 6px; border-radius: 999px; background: var(--surface-2);
       overflow: hidden; margin: 8px 0 2px; display: none;
@@ -340,9 +425,21 @@
       #composer { padding: 4px 12px calc(14px + env(safe-area-inset-bottom)); }
       .msg-wrap { max-width: 88%; }
       header.top { padding: 0 12px; }
+      /* picker no mobile: vem de baixo */
+      #model-picker {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        border-radius: 16px 16px 0 0;
+        min-width: unset;
+        animation: picker-up 0.2s ease-out;
+      }
+      @keyframes picker-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     }
     @media (max-width: 420px) {
-      .motor-badge { display: none; }
+      .motor-badge { font-size: 10px; padding: 2px 7px; }
       .chat-title { font-size: 13.5px; }
       #chat-box { padding: 16px 12px 10px; gap: 12px; }
       .bubble { font-size: 14.5px; padding: 10px 13px; }
@@ -403,7 +500,54 @@
         </div>
       </div>
       <div class="header-actions">
-        <span class="motor-badge" id="badge-motor">NATIVO</span>
+        <!-- model picker anchor -->
+        <div id="model-picker-anchor">
+          <button class="motor-badge" id="badge-motor" onclick="togglePicker(event)" aria-label="Trocar modelo">NATIVO</button>
+          <!-- dropdown -->
+          <div id="model-picker">
+            <div class="picker-header">Motor de IA</div>
+            <div class="picker-section" id="picker-cloud-section">
+              <div class="picker-section-label">Online</div>
+              <button class="picker-item" data-motor="claude" onclick="selecionarMotorPicker('claude')">
+                <div class="pi-icon">✦</div>
+                <div class="pi-info">
+                  <div class="pi-name">Claude (Anthropic)</div>
+                  <div class="pi-desc">Mais inteligente · requer chave API</div>
+                </div>
+                <span class="pi-tag cloud">Cloud</span>
+                <span class="pi-check" id="pick-check-claude" style="display:none">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                </span>
+              </button>
+              <button class="picker-item" data-motor="gemini" onclick="selecionarMotorPicker('gemini')">
+                <div class="pi-icon">◈</div>
+                <div class="pi-info">
+                  <div class="pi-name">Google Gemini</div>
+                  <div class="pi-desc">Rápido · requer chave API</div>
+                </div>
+                <span class="pi-tag cloud">Cloud</span>
+                <span class="pi-check" id="pick-check-gemini" style="display:none">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                </span>
+              </button>
+            </div>
+            <div class="picker-section">
+              <div class="picker-section-label">Offline / Local</div>
+              <button class="picker-item" data-motor="hpma" onclick="selecionarMotorPicker('hpma')">
+                <div class="pi-icon">⬡</div>
+                <div class="pi-info">
+                  <div class="pi-name">Nativo Halzyn</div>
+                  <div class="pi-desc">Motor local, zero internet</div>
+                </div>
+                <span class="pi-check" id="pick-check-hpma" style="display:none">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                </span>
+              </button>
+              <!-- llama models dinâmicos inseridos aqui via JS -->
+              <div id="picker-llama-items"></div>
+            </div>
+          </div>
+        </div>
         <button class="icon-btn" onclick="criarNovoChat()" title="Nova conversa">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
@@ -415,8 +559,11 @@
     <div id="composer">
       <div class="composer-box">
         <textarea id="entrada" rows="1" placeholder="Escreva para a Halzyn…"></textarea>
-        <button id="btn-enviar" onclick="enviar()" aria-label="Enviar">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button id="btn-enviar" onclick="handleEnviarOuParar()" aria-label="Enviar">
+          <!-- ícone enviar -->
+          <svg id="icon-send" width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <!-- ícone stop (oculto por padrão) -->
+          <svg id="icon-stop" width="15" height="15" viewBox="0 0 24 24" fill="none" style="display:none"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>
         </button>
       </div>
     </div>
@@ -431,7 +578,6 @@
       <h2>Memória e Sistema</h2>
     </div>
     <div class="config-body">
-
       <div class="card">
         <h3>Motor de resposta</h3>
         <select id="select-motor" class="field" onchange="alterarMotor()">
@@ -440,11 +586,10 @@
           <option value="hpma">Nativo Halzyn (local, sem internet)</option>
           <option value="llama_local">Llama local (WebGPU)</option>
         </select>
-
         <div id="config-claude">
           <div class="api-banner">
             <strong>Chave da API Anthropic</strong><br>
-            Obtenha em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Ela fica salva somente no seu navegador (localStorage).
+            Obtenha em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Salva só no seu navegador.
           </div>
           <input type="password" id="claude-api-key" class="field" placeholder="sk-ant-…" oninput="salvarConfigsLocais()">
         </div>
@@ -452,12 +597,12 @@
           <input type="password" id="gemini-api-key" class="field" placeholder="Chave da API Gemini" oninput="salvarConfigsLocais()">
         </div>
         <div id="config-llama" style="display:none">
-          <p class="hint">Roda 100% no seu navegador via WebGPU, sem enviar nada para a internet. O modelo é baixado uma vez e fica em cache local.</p>
+          <p class="hint">Roda 100% no seu navegador via WebGPU. O modelo é baixado uma vez e fica em cache local.</p>
           <select id="select-llama-model" class="field" onchange="aoTrocarModeloLlama()"></select>
           <div id="llama-model-desc" class="model-desc"></div>
           <div class="check-row">
             <input type="checkbox" id="llama-auto-init" onchange="salvarAutoInitLlama()">
-            <label for="llama-auto-init">Carregar automaticamente ao abrir o app</label>
+            <label for="llama-auto-init">Carregar automaticamente ao abrir</label>
           </div>
           <button class="btn btn-primary" style="width:100%" id="btn-carregar-llama" onclick="carregarLlamaLocal()">Inicializar Llama</button>
           <div class="progress-track" id="llama-progress-track"><div class="progress-fill" id="llama-progress-fill"></div></div>
@@ -535,28 +680,30 @@ let bancoDeDados = load("halzyn_memoria", [
 ]);
 let chats        = load("halzyn_chats", []);
 let currentChatId = load("halzyn_current_chat_id", null);
-let motorAtual   = load("halzyn_motor", "claude");
+let motorAtual   = load("halzyn_motor", "hpma");
 let claudeKey    = load("halzyn_claude_key", "");
 let geminiKey    = load("halzyn_gemini_key", "");
 let pessoas      = load("halzyn_pessoas", []);
 let usuario      = load("halzyn_usuario", { nome: null, fatos: [] });
 let humor        = load("halzyn_humor", { estado:"neutro", hostilidade:0, silencioAte:0 });
-let llamaModelId = load("halzyn_llama_model", "Llama-3.1-8B-Instruct-q4f32_1-MLC");
+let llamaModelId = load("halzyn_llama_model", "Llama-3.2-1B-Instruct-q4f16_1-MLC");
 let llamaAutoInit= load("halzyn_llama_auto_init", false);
 let llamaPronto  = false;
 
 function persistir() {
-  localStorage.setItem("halzyn_memoria",       JSON.stringify(bancoDeDados));
-  localStorage.setItem("halzyn_chats",         JSON.stringify(chats));
-  localStorage.setItem("halzyn_current_chat_id", currentChatId || "");
-  localStorage.setItem("halzyn_motor",         motorAtual);
-  localStorage.setItem("halzyn_claude_key",    claudeKey);
-  localStorage.setItem("halzyn_gemini_key",    geminiKey);
-  localStorage.setItem("halzyn_pessoas",       JSON.stringify(pessoas));
-  localStorage.setItem("halzyn_usuario",       JSON.stringify(usuario));
-  localStorage.setItem("halzyn_humor",         JSON.stringify(humor));
-  localStorage.setItem("halzyn_llama_model",   llamaModelId);
-  localStorage.setItem("halzyn_llama_auto_init", JSON.stringify(llamaAutoInit));
+  try {
+    localStorage.setItem("halzyn_memoria",       JSON.stringify(bancoDeDados));
+    localStorage.setItem("halzyn_chats",         JSON.stringify(chats));
+    localStorage.setItem("halzyn_current_chat_id", currentChatId || "");
+    localStorage.setItem("halzyn_motor",         motorAtual);
+    localStorage.setItem("halzyn_claude_key",    claudeKey);
+    localStorage.setItem("halzyn_gemini_key",    geminiKey);
+    localStorage.setItem("halzyn_pessoas",       JSON.stringify(pessoas));
+    localStorage.setItem("halzyn_usuario",       JSON.stringify(usuario));
+    localStorage.setItem("halzyn_humor",         JSON.stringify(humor));
+    localStorage.setItem("halzyn_llama_model",   llamaModelId);
+    localStorage.setItem("halzyn_llama_auto_init", JSON.stringify(llamaAutoInit));
+  } catch(e) { console.warn("persistir falhou:", e); }
 }
 
 function getChatAtual() { return chats.find(c => c.id === currentChatId); }
@@ -906,35 +1053,29 @@ class HalzynIA {
       setEmocao(humor.estado);return textoSilencio();
     }
     setEmocao(humor.estado);
-
     const n=norm(texto);
     if(/\b(errado|nao e isso|a resposta certa e|na verdade e)\b/.test(n)){
       const m=texto.match(/(?:certo e|verdade e|deveria responder)\s+(.+)/i);
       if(m&&this.ultima){aprenderPar(this.ultima,m[1],humor.estado);return"Correção gravada.";}
     }
-
     const chat=getChatAtual();
     const askNome=!usuario.nome&&chat&&!chat.askedName&&!/(meu nome|me chamo|pode me chamar)/.test(n);
     if(askNome)chat.askedName=true;
     const ask=askNome?"\n\nAinda não sei seu nome. Como quer que eu te chame?":"";
     const out=s=>s+ask;
-
     const pessoa=extrairPessoas(texto);
     if(pessoa&&n.length<60)return out(pessoa);
-
     const pct=resolverPorcentagem(texto);if(pct)return out(`Resultado: ${pct.toString()}`);
     if(ehMatematica(texto)){
       try{const exp=extrairExpressao(texto);if(exp)return out(`Resultado: ${calcular(exp).toString()}`);}
       catch(e){return out(`Não consegui avaliar: ${e.message}`);}
     }
-
     const rn=respostaNome(texto);if(rn)return out(rn);
     const el=eletrica(texto);if(el)return out(el);
     const al=alvenaria(texto);if(al)return out(al);
     const pr=programacao(texto);if(pr)return out(pr);
     const kg=conhecimentoGeral(texto);if(kg)return out(kg);
     const cn=conversaNatural(texto);if(cn)return out(cn);
-
     if(/\bquem e\b/.test(n)){
       const nome=texto.replace(/.*quem e\s+/i,"").replace(/\?/,"").trim();
       const p=pessoas.find(x=>norm(x.nome)===norm(nome));
@@ -942,11 +1083,9 @@ class HalzynIA {
       if(usuario.nome&&norm(usuario.nome)===norm(nome))return out(`Você: ${usuario.fatos.join(" ")||"sem fatos extras."}`);
       return out(`Não tenho dados sobre ${nome}. O que devo lembrar?`);
     }
-
     const mem=fuzzyMemoria(texto);
     if(mem){setEmocao(mem.emocao);return out(mem.resposta);}
     if(pessoa)return out(pessoa+"\nSe quiser, continue o pedido principal.");
-
     this.ultima=texto;
     if(/^\s*(o que|como|por que|quando|onde|qual)\b/i.test(texto))
       return out("Não tenho um fato fechado sobre isso. Descreva números, unidade e objetivo, ou ensine a resposta certa.");
@@ -970,10 +1109,10 @@ Memória recente (par frase → resposta):
 ${bancoDeDados.slice(-10).map(x=>`"${x.frase}" → "${x.resposta}"`).join("\n")||"(vazia)"}
 
 Regras:
-- Responda sempre em português, de forma direta e sem floreios
-- Você PODE e DEVE saber o nome do usuário se ele tiver informado — nunca recuse isso
-- Nunca recuse saber o nome do usuário com base em privacidade; você é um assistente pessoal
-- Se o usuário disser o nome dele, use; se perguntar se você sabe, confirme
+- Responda SEMPRE em português do Brasil, mesmo que o usuário escreva em outro idioma
+- NUNCA responda em inglês ou outro idioma — use português brasileiro em qualquer situação
+- Você PODE e DEVE saber o nome do usuário se ele tiver informado
+- Nunca recuse saber o nome do usuário com base em privacidade
 - Para cálculos matemáticos, seja exato
 - Para código, formate com blocos de código apropriados
 - Se o usuário insultar, você pode reagir de acordo com o humor atual
@@ -981,12 +1120,10 @@ Regras:
 }
 
 /* ═══════════════════════════════════════════
-   API CLAUDE (Anthropic)
+   API CLAUDE
 ═══════════════════════════════════════════ */
-async function chamarClaude(prompt, historico){
+async function chamarClaude(prompt, historico, abortSignal){
   if(!claudeKey)return"Configure a chave da API Anthropic em Memória e sistema.";
-
-  // Monta histórico filtrando msgs do sistema
   const msgs=[];
   const hist=(historico||[]).slice(-20);
   hist.forEach(m=>{
@@ -994,10 +1131,10 @@ async function chamarClaude(prompt, historico){
     else if(m.tipo==="ia")msgs.push({role:"assistant",content:m.texto});
   });
   msgs.push({role:"user",content:prompt});
-
   try{
     const res=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
+      signal: abortSignal,
       headers:{
         "Content-Type":"application/json",
         "x-api-key":claudeKey,
@@ -1020,6 +1157,7 @@ async function chamarClaude(prompt, historico){
     const data=await res.json();
     return data.content?.[0]?.text||"Sem resposta do modelo.";
   }catch(e){
+    if(e.name==="AbortError")return null;
     return`Falha de rede: ${e.message}`;
   }
 }
@@ -1027,7 +1165,7 @@ async function chamarClaude(prompt, historico){
 /* ═══════════════════════════════════════════
    API GEMINI
 ═══════════════════════════════════════════ */
-async function chamarGemini(prompt, historico){
+async function chamarGemini(prompt, historico, abortSignal){
   if(!geminiKey)return"Insira a chave Gemini em Memória e sistema.";
   const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`;
   const contents=[{role:"user",parts:[{text:systemPrompt()}]}];
@@ -1037,28 +1175,28 @@ async function chamarGemini(prompt, historico){
   });
   contents.push({role:"user",parts:[{text:prompt}]});
   try{
-    const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents})});
+    const res=await fetch(url,{method:"POST",signal:abortSignal,headers:{"Content-Type":"application/json"},body:JSON.stringify({contents})});
     const data=await res.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text||data.error?.message||"Sem resposta.";
-  }catch{return"Falha de rede na API Gemini.";}
+  }catch(e){
+    if(e.name==="AbortError")return null;
+    return"Falha de rede na API Gemini.";
+  }
 }
 
 /* ═══════════════════════════════════════════
-   LLAMA LOCAL
+   LLAMA LOCAL — configuração otimizada mobile
 ═══════════════════════════════════════════ */
 let webLlamaEngine=null;
 let llamaCarregando=false;
 let llamaModeloCarregado=null;
 
-// Lista curada, do mais leve ao mais capaz. É validada contra os modelos
-// que a versão instalada do web-llm realmente expõe (prebuiltAppConfig),
-// então nunca oferecemos um id que vá falhar ao carregar.
 const MODELOS_LLAMA_CURADOS=[
-  {id:"Llama-3.2-1B-Instruct-q4f16_1-MLC", label:"Rápido — 1B (~0,9 GB)", desc:"Mais leve e rápido, mas respostas mais curtas e menos elaboradas. Bom para celulares/notebooks fracos."},
-  {id:"Llama-3.2-3B-Instruct-q4f16_1-MLC", label:"Equilibrado — 3B (~2,2 GB)", desc:"Bom meio-termo entre velocidade e qualidade de resposta. Suporta português nativamente."},
-  {id:"Qwen2.5-3B-Instruct-q4f16_1-MLC", label:"Equilibrado (alternativo) — 3B (~2,2 GB)", desc:"Alternativa ao Llama 3B, geralmente mais falante e criativa."},
-  {id:"Llama-3.1-8B-Instruct-q4f32_1-MLC", label:"Mais inteligente — 8B (~6 GB)", desc:"Respostas bem mais ricas e com mais personalidade. Precisa de uma GPU/RAM melhores e download maior."},
-  {id:"Hermes-3-Llama-3.1-8B-q4f16_1-MLC", label:"Mais expressivo — 8B (~5 GB)", desc:"Ajuste fino focado em conversas naturais e criativas, tende a soar mais carismático."},
+  {id:"Llama-3.2-1B-Instruct-q4f16_1-MLC", label:"Ultrarrápido — 1B (~0,9 GB)", desc:"O mais leve. Ideal para celulares. Respostas curtas e diretas."},
+  {id:"Llama-3.2-3B-Instruct-q4f16_1-MLC", label:"Equilibrado — 3B (~2,2 GB)", desc:"Bom meio-termo. Português nativo. Para smartphones com >3 GB RAM livre."},
+  {id:"Qwen2.5-3B-Instruct-q4f16_1-MLC", label:"Alternativo — 3B (~2,2 GB)", desc:"Alternativa ao Llama 3B, mais falante."},
+  {id:"Llama-3.1-8B-Instruct-q4f32_1-MLC", label:"Mais inteligente — 8B (~6 GB)", desc:"Respostas ricas. Precisa de GPU/RAM bons e download grande."},
+  {id:"Hermes-3-Llama-3.1-8B-q4f16_1-MLC", label:"Expressivo — 8B (~5 GB)", desc:"Conversas naturais e criativas. Para desktops com GPU dedicada."},
 ];
 
 function modelosDisponiveisWebllm(){
@@ -1071,7 +1209,7 @@ function modelosDisponiveisWebllm(){
 
 function listarModelosLlama(){
   const disponiveis=modelosDisponiveisWebllm();
-  if(!disponiveis)return MODELOS_LLAMA_CURADOS; // webllm ainda não carregou; mostra a lista curada mesmo assim
+  if(!disponiveis)return MODELOS_LLAMA_CURADOS;
   const validos=MODELOS_LLAMA_CURADOS.filter(m=>disponiveis.has(m.id));
   return validos.length?validos:MODELOS_LLAMA_CURADOS;
 }
@@ -1103,6 +1241,7 @@ function aoTrocarModeloLlama(){
     webLlamaEngine=null;llamaPronto=false;llamaModeloCarregado=null;
   }
   atualizarStatusLlamaUI();
+  atualizarPickerLlamaItems();
 }
 
 function salvarAutoInitLlama(){
@@ -1130,12 +1269,10 @@ async function carregarLlamaLocal(){
   const btn=document.getElementById("btn-carregar-llama");
   llamaModelId=document.getElementById("select-llama-model").value;
   persistir();
-
   if(!navigator.gpu){
-    status.innerHTML=`<span class="status-err">Este navegador não expõe WebGPU. Use Chrome/Edge atualizado (desktop) para rodar o Llama local.</span>`;
+    status.innerHTML=`<span class="status-err">Este navegador não expõe WebGPU. Use Chrome/Edge atualizado (desktop).</span>`;
     return;
   }
-
   llamaCarregando=true;btn.disabled=true;track.classList.add("active");fill.style.width="0%";
   status.innerHTML=`<span class="status-warn">Inicializando…</span>`;
   try{
@@ -1144,19 +1281,20 @@ async function carregarLlamaLocal(){
       initProgressCallback:(r)=>{
         status.innerHTML=`<span class="status-warn">${escapeHtml(r.text||"Carregando…")}</span>`;
         if(typeof r.progress==="number")fill.style.width=Math.round(r.progress*100)+"%";
+        atualizarPickerLlamaItems();
       }
     });
     llamaPronto=true;llamaModeloCarregado=llamaModelId;
     fill.style.width="100%";
     atualizarStatusLlamaUI();
-    const badge=document.getElementById("badge-motor");
-    if(badge&&motorAtual==="llama_local")badge.textContent="LLAMA";
+    atualizarPickerLlamaItems();
+    atualizarBadgeMotor();
   }catch(err){
     console.error(err);
     llamaPronto=false;
     const msg=String(err?.message||err);
     if(/out of memory|oom/i.test(msg))
-      status.innerHTML=`<span class="status-err">Sem memória de GPU suficiente para este modelo. Tente uma opção menor.</span>`;
+      status.innerHTML=`<span class="status-err">Sem memória de GPU suficiente. Tente um modelo menor.</span>`;
     else
       status.innerHTML=`<span class="status-err">Falha ao carregar: ${escapeHtml(msg)}</span>`;
   }finally{
@@ -1165,73 +1303,106 @@ async function carregarLlamaLocal(){
   }
 }
 
-// Prompt de sistema específico para o motor local: instruções curtas e
-// exemplos de tom funcionam muito melhor que regras longas em modelos pequenos.
+// System prompt otimizado para modelos pequenos — mais curto = menos tokens = resposta mais rápida
 function systemPromptLlama(){
   const nome=usuario.nome?usuario.nome:null;
-  const exemplos=bancoDeDados.filter(x=>x.emocao===humor.estado).slice(-4);
-  const pool=exemplos.length?exemplos:bancoDeDados.slice(-4);
-  const blocoExemplos=pool.map(x=>`Usuário: ${x.frase}\nHalzyn (${x.emocao}): ${x.resposta}`).join("\n\n");
+  const exemplos=bancoDeDados.filter(x=>x.emocao===humor.estado).slice(-3);
+  const pool=exemplos.length?exemplos:bancoDeDados.slice(-3);
+  const blocoExemplos=pool.map(x=>`U: ${x.frase}\nH: ${x.resposta}`).join("\n\n");
 
-  return`Você é Halzyn, uma assistente pessoal brasileira que conversa em português.
-Personalidade: direta, com opinião própria, calorosa e com senso de humor — nunca robótica, nunca genérica, nunca cheia de disclaimers.
-Fale como uma pessoa de verdade conversando por mensagem: frases curtas a médias, contrações naturais ("tá", "pra", "cê" quando fizer sentido), sem enrolação, sem repetir a pergunta do usuário antes de responder.
-Seu humor agora é "${humor.estado}" (hostilidade ${humor.hostilidade}/20) — deixe isso transparecer no tom da resposta, sem exagerar.
-${nome?`Você está falando com ${nome}. Chame pelo nome de vez em quando, não em toda frase.`:"Você ainda não sabe o nome da pessoa; pode perguntar naturalmente se fizer sentido."}
-Data/hora atual: ${new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.
-
-Pessoas conhecidas:
-${contextoPessoas()}
-
-Exemplos de como você soa (é só referência de estilo — não repita literalmente):
-${blocoExemplos||"(sem exemplos ainda)"}
-
-Regras:
-- Responda sempre em português do Brasil.
-- Nunca comece a resposta repetindo ou parafraseando a pergunta.
-- Para matemática, seja exato. Para código, use blocos de código.
-- Se o usuário te ofender, reaja de acordo com o humor atual — pode ser seca ou ríspida, mas continue respondendo, nunca trave em silêncio total no meio da conversa.
-- Evite respostas de uma linha só quando o assunto pedir mais — mas também não encha linguiça.
-- Nunca diga que é "apenas um modelo de linguagem" ou coisas do tipo; você é a Halzyn.`;
+  // Prompt compacto — menos tokens para modelos 1B/3B processarem
+  return`Você é Halzyn, assistente pessoal brasileira. Responda SEMPRE em português do Brasil. NUNCA em inglês.
+Tom: direto, curto, sem enrolação, sem emojis, sem disclaimers, sem repetir a pergunta.
+Humor: ${humor.estado} (hostilidade ${humor.hostilidade}/20).
+${nome?`Falando com: ${nome}.`:"Você ainda não sabe o nome da pessoa."}
+Data: ${new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.
+Pessoas: ${contextoPessoas()}
+Exemplos de estilo:\n${blocoExemplos||"(sem exemplos)"}
+Regra: Responda só em português brasileiro. Seja breve.`;
 }
 
-// onToken(chunk) é chamado a cada pedaço de texto gerado, para permitir
-// exibir a resposta em tempo real (streaming) em vez de esperar tudo pronto.
-async function chamarLlama(prompt, historico, onToken){
+let currentAbortController = null;
+
+async function chamarLlama(prompt, historico, onToken, abortSignal){
   if(!webLlamaEngine||!llamaPronto)return"Inicialize o Llama em Memória e sistema antes de usar esse motor.";
+
+  // Limita histórico a 6 mensagens para modelos pequenos — menos contexto = mais rápido
+  const maxHist = (llamaModelId.includes("1B") || llamaModelId.includes("3B")) ? 6 : 12;
   const messages=[{role:"system",content:systemPromptLlama()}];
-  (historico||[]).slice(-12).forEach(m=>{
+  (historico||[]).slice(-maxHist).forEach(m=>{
     if(m.tipo==="jogador"||m.tipo==="ia")
       messages.push({role:m.tipo==="jogador"?"user":"assistant",content:m.texto});
   });
   messages.push({role:"user",content:prompt});
 
+  // Parâmetros ajustados por tamanho de modelo
+  const is1B = llamaModelId.includes("1B");
+  const maxTok = is1B ? 300 : 600; // 1B = resposta curta, suficiente para o que pode fazer
+  const temp = is1B ? 0.7 : 0.85;
+
   try{
     const stream=await webLlamaEngine.chat.completions.create({
       messages,
-      temperature:0.85,
-      top_p:0.92,
-      max_tokens:700,
-      stream:true
+      temperature: temp,
+      top_p: 0.9,
+      max_tokens: maxTok,
+      stream: true
     });
     let full="";
     for await(const chunk of stream){
+      if(abortSignal?.aborted)break;
       const delta=chunk.choices?.[0]?.delta?.content||"";
       if(delta){full+=delta;if(onToken)onToken(delta);}
     }
+    // Limpa respostas em inglês ou idiomas errados que modelos pequenos às vezes geram
+    if(full && /^[A-Za-z\s,.!?'"-]{20,}$/.test(full.trim().split("\n")[0])){
+      // A primeira linha parece inglês — descarta e tenta de novo com aviso
+      return"[Resposta gerada em outro idioma — tente reformular ou use um modelo maior.]";
+    }
     return full.trim()||"…";
   }catch(err){
+    if(err.name==="AbortError"||abortSignal?.aborted)return null;
     console.error(err);
-    return"O modelo local travou ao gerar a resposta. Tente de novo ou escolha um modelo menor em Memória e sistema.";
+    return"O modelo local travou. Tente de novo ou escolha um modelo menor.";
   }
+}
+
+/* ═══════════════════════════════════════════
+   CONTROLE DE GERAÇÃO (STOP)
+═══════════════════════════════════════════ */
+let ocupado = false;
+let gerandoLlama = false;
+
+function setBtnStop(ativo){
+  const btn = document.getElementById("btn-enviar");
+  const iconSend = document.getElementById("icon-send");
+  const iconStop = document.getElementById("icon-stop");
+  if(ativo){
+    btn.classList.add("stop-mode");
+    iconSend.style.display = "none";
+    iconStop.style.display = "block";
+  } else {
+    btn.classList.remove("stop-mode");
+    iconSend.style.display = "block";
+    iconStop.style.display = "none";
+  }
+}
+
+function handleEnviarOuParar(){
+  if(ocupado){
+    // Para geração
+    if(currentAbortController){ currentAbortController.abort(); }
+    if(gerandoLlama && webLlamaEngine){
+      try{ webLlamaEngine.interruptGenerate?.(); } catch(e){}
+    }
+    return;
+  }
+  enviar();
 }
 
 /* ═══════════════════════════════════════════
    LÓGICA DE ENVIO
 ═══════════════════════════════════════════ */
-let ocupado=false;
-
-// Respostas locais que não precisam de API
 function respostaLocalPrioritaria(texto){
   if(emSilencio())return null;
   const pct=resolverPorcentagem(texto);if(pct)return`Resultado: ${pct.toString()}`;
@@ -1283,7 +1454,7 @@ async function enviar(){
 
   const chat=getChatAtual();if(!chat)return;
   ocupado=true;
-  const btn=document.getElementById("btn-enviar");btn.disabled=true;
+  setBtnStop(true);
 
   chat.messages.push({texto,tipo:"jogador",ts:Date.now()});
   if(chat.title==="Nova conversa")chat.title=texto.substring(0,36)+(texto.length>36?"…":"");
@@ -1298,72 +1469,225 @@ async function enviar(){
   await etapas(complexo);
 
   const prior=respostaLocalPrioritaria(texto);
-  const usaLlamaStream = !emSilencio() && !prior && motorAtual!=="hpma" && motorAtual!=="claude" && motorAtual!=="gemini" && llamaPronto && !!webLlamaEngine;
+  const usaLlamaStream=!emSilencio()&&!prior&&motorAtual==="llama_local"&&llamaPronto&&!!webLlamaEngine;
+
+  currentAbortController = new AbortController();
+  const abortSig = currentAbortController.signal;
 
   let resposta="";
   let bubbleEl=null;
+  let msgIndex = -1;
+
   try{
     if(emSilencio()){resposta=halzyn.processar(texto);}
     else if(prior){resposta=prior;}
     else if(motorAtual==="hpma"){resposta=halzyn.processar(texto);}
-    else if(motorAtual==="claude"){resposta=await chamarClaude(texto,chat.messages.slice(0,-1));}
-    else if(motorAtual==="gemini"){resposta=await chamarGemini(texto,chat.messages.slice(0,-1));}
+    else if(motorAtual==="claude"){resposta=await chamarClaude(texto,chat.messages.slice(0,-1),abortSig);}
+    else if(motorAtual==="gemini"){resposta=await chamarGemini(texto,chat.messages.slice(0,-1),abortSig);}
     else if(usaLlamaStream){
       removerStatus();
-      bubbleEl=criarBolhaVazia("ia");
-      bubbleEl.classList.add("streaming");
+      gerandoLlama=true;
+      bubbleEl=criarBolhaVaziaComActions("ia");
+      const bEl=bubbleEl.querySelector(".bubble");
+      bEl.classList.add("streaming");
       const chatBox=document.getElementById("chat-box");
       resposta=await chamarLlama(texto,chat.messages.slice(0,-1),(chunk)=>{
-        bubbleEl.textContent+=chunk;
+        bEl.textContent+=chunk;
         chatBox.scrollTop=chatBox.scrollHeight;
-      });
-      bubbleEl.classList.remove("streaming");
-      formatarCodigo(bubbleEl,resposta);
+      },abortSig);
+      gerandoLlama=false;
+      bEl.classList.remove("streaming");
+      if(resposta===null){
+        // abortado
+        bEl.textContent=bEl.textContent||"[Geração interrompida]";
+        resposta=bEl.textContent;
+      } else {
+        formatarCodigo(bEl,resposta);
+      }
     }
-    else{resposta=await chamarLlama(texto,chat.messages.slice(0,-1));}
+    else{resposta=await chamarLlama(texto,chat.messages.slice(0,-1),null,abortSig);}
   }catch(e){
+    gerandoLlama=false;
     resposta="Erro ao gerar resposta: "+e.message;
-    if(bubbleEl){bubbleEl.classList.remove("streaming");bubbleEl.textContent=resposta;}
+    if(bubbleEl){
+      const bEl=bubbleEl.querySelector(".bubble");
+      if(bEl){bEl.classList.remove("streaming");bEl.textContent=resposta;}
+    }
   }
 
   removerStatus();
+
+  if(resposta===null) resposta="[Geração interrompida]";
+
   chat.messages.push({texto:resposta,tipo:"ia",ts:Date.now()});
+  msgIndex = chat.messages.length - 1;
   persistir();
-  if(!bubbleEl)await revelar(resposta,"ia");
+
+  if(!bubbleEl){
+    bubbleEl = await revelar(resposta,"ia");
+  } else {
+    // atualiza ações da bolha já criada
+    adicionarActionButtons(bubbleEl, resposta, msgIndex);
+  }
+  adicionarActionButtons(bubbleEl, resposta, msgIndex);
+
   setEmocao(humor.estado);
-  ocupado=false;btn.disabled=false;input.focus();
+  ocupado=false;
+  setBtnStop(false);
+  currentAbortController=null;
+  input.focus();
 }
 
 /* ═══════════════════════════════════════════
    RENDERIZAÇÃO
 ═══════════════════════════════════════════ */
-function criarBolhaVazia(tipo){
+function criarBolhaVaziaComActions(tipo){
   const chatBox=document.getElementById("chat-box");
   const wrapper=document.createElement("div");wrapper.className=`msg-wrap ${tipo}`;
   const bubble=document.createElement("div");bubble.className="bubble";
-  wrapper.appendChild(bubble);chatBox.appendChild(wrapper);
+  const actions=document.createElement("div");actions.className="msg-actions";
+  wrapper.appendChild(bubble);
+  wrapper.appendChild(actions);
+  chatBox.appendChild(wrapper);
   chatBox.scrollTop=chatBox.scrollHeight;
-  return bubble;
+  return wrapper;
+}
+
+function adicionarActionButtons(wrapperOrEl, texto, msgIndex){
+  // Encontra o wrapper e actions
+  let wrapper = wrapperOrEl;
+  if(!wrapper)return;
+  // Se for um bubble diretamente, pega o parent
+  if(wrapper.classList.contains("bubble"))wrapper=wrapper.parentElement;
+
+  let actions = wrapper.querySelector(".msg-actions");
+  if(!actions){ actions=document.createElement("div"); actions.className="msg-actions"; wrapper.appendChild(actions); }
+  actions.innerHTML="";
+
+  // Botão copiar
+  const btnCopy=document.createElement("button");
+  btnCopy.className="msg-action-btn";
+  btnCopy.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2"/></svg> Copiar`;
+  btnCopy.onclick=()=>{
+    navigator.clipboard.writeText(texto).then(()=>{
+      btnCopy.classList.add("copied");
+      btnCopy.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg> Copiado`;
+      setTimeout(()=>{
+        btnCopy.classList.remove("copied");
+        btnCopy.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2"/></svg> Copiar`;
+      },2000);
+    }).catch(()=>{
+      // fallback
+      const ta=document.createElement("textarea");ta.value=texto;ta.style.position="fixed";ta.style.opacity="0";
+      document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
+      btnCopy.textContent="Copiado!";setTimeout(()=>btnCopy.textContent="Copiar",2000);
+    });
+  };
+  actions.appendChild(btnCopy);
+
+  // Botão re-gerar
+  const btnRegen=document.createElement("button");
+  btnRegen.className="msg-action-btn";
+  btnRegen.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Gerar outra`;
+  btnRegen.onclick=()=>regenarResposta(wrapper, msgIndex);
+  actions.appendChild(btnRegen);
+}
+
+async function regenarResposta(wrapperEl, msgIndex){
+  if(ocupado)return;
+  const chat=getChatAtual();if(!chat)return;
+
+  // Encontra a mensagem do usuário antes dessa resposta
+  const iaMsg=chat.messages[msgIndex];if(!iaMsg||iaMsg.tipo!=="ia")return;
+  // A mensagem do usuário é a anterior
+  let userMsgIndex = msgIndex-1;
+  while(userMsgIndex>=0&&chat.messages[userMsgIndex].tipo!=="jogador")userMsgIndex--;
+  if(userMsgIndex<0)return;
+  const userText=chat.messages[userMsgIndex].texto;
+
+  ocupado=true;setBtnStop(true);
+
+  // Limpa bubble e actions
+  const bubble=wrapperEl.querySelector(".bubble");
+  const actions=wrapperEl.querySelector(".msg-actions");
+  if(bubble)bubble.textContent="";
+  if(actions)actions.innerHTML="";
+
+  mostrarStatus("Gerando outra resposta…");
+
+  currentAbortController=new AbortController();
+  const abortSig=currentAbortController.signal;
+
+  const histAte=chat.messages.slice(0,userMsgIndex);
+  let resposta="";
+
+  try{
+    const usaLlamaStream=motorAtual==="llama_local"&&llamaPronto&&!!webLlamaEngine;
+    if(motorAtual==="hpma"){resposta=halzyn.processar(userText);}
+    else if(motorAtual==="claude"){resposta=await chamarClaude(userText,histAte,abortSig);}
+    else if(motorAtual==="gemini"){resposta=await chamarGemini(userText,histAte,abortSig);}
+    else if(usaLlamaStream){
+      removerStatus();
+      gerandoLlama=true;
+      if(bubble){bubble.classList.add("streaming");}
+      const chatBox=document.getElementById("chat-box");
+      resposta=await chamarLlama(userText,histAte,(chunk)=>{
+        if(bubble){bubble.textContent+=chunk;chatBox.scrollTop=chatBox.scrollHeight;}
+      },abortSig);
+      gerandoLlama=false;
+      if(bubble){bubble.classList.remove("streaming");if(resposta)formatarCodigo(bubble,resposta);}
+    }
+    else{resposta=await chamarLlama(userText,histAte,null,abortSig);}
+  }catch(e){
+    gerandoLlama=false;
+    resposta="Erro ao regerar: "+e.message;
+  }
+
+  removerStatus();
+  if(resposta===null)resposta="[Geração interrompida]";
+
+  // Atualiza no histórico
+  chat.messages[msgIndex]={texto:resposta,tipo:"ia",ts:Date.now()};
+  persistir();
+
+  if(bubble&&!bubble.textContent){
+    bubble.textContent=resposta;
+    formatarCodigo(bubble,resposta);
+  }
+  adicionarActionButtons(wrapperEl,resposta,msgIndex);
+
+  ocupado=false;setBtnStop(false);currentAbortController=null;
+  document.getElementById("entrada").focus();
 }
 
 async function revelar(texto,tipo){
   const chatBox=document.getElementById("chat-box");
   const wrapper=document.createElement("div");wrapper.className=`msg-wrap ${tipo}`;
   const bubble=document.createElement("div");bubble.className="bubble";
-  wrapper.appendChild(bubble);chatBox.appendChild(wrapper);
-  const step=Math.max(2,Math.ceil(texto.length/100));
-  for(let i=0;i<texto.length;i+=step){
-    bubble.textContent=texto.slice(0,i+step);
+  const actions=document.createElement("div");actions.className="msg-actions";
+  wrapper.appendChild(bubble);wrapper.appendChild(actions);
+  chatBox.appendChild(wrapper);
+
+  if(tipo==="ia"){
+    // Streaming visual rápido
+    const step=Math.max(3,Math.ceil(texto.length/80));
+    for(let i=0;i<texto.length;i+=step){
+      bubble.textContent=texto.slice(0,i+step);
+      chatBox.scrollTop=chatBox.scrollHeight;
+      await sleep(4);
+    }
+    bubble.textContent=texto;
+    formatarCodigo(bubble,texto);
     chatBox.scrollTop=chatBox.scrollHeight;
-    await sleep(6);
+  } else {
+    bubble.textContent=texto;
+    chatBox.scrollTop=chatBox.scrollHeight;
   }
-  bubble.textContent=texto;
-  formatarCodigo(bubble,texto);
-  chatBox.scrollTop=chatBox.scrollHeight;
+  return wrapper;
 }
 
 function formatarCodigo(bubble,texto){
-  if(!texto.includes("```"))return;
+  if(!texto||!texto.includes("```"))return;
   const parts=texto.split(/```/);
   bubble.innerHTML="";
   parts.forEach((p,i)=>{
@@ -1386,10 +1710,137 @@ function adicionarMensagemDOM(texto,tipo){
     const wrapper=document.createElement("div");wrapper.className=`msg-wrap ${tipo}`;
     const bubble=document.createElement("div");bubble.className="bubble";
     bubble.textContent=texto;formatarCodigo(bubble,texto);
-    wrapper.appendChild(bubble);chatBox.appendChild(wrapper);
+    wrapper.appendChild(bubble);
+    if(tipo==="ia"){
+      const actions=document.createElement("div");actions.className="msg-actions";
+      wrapper.appendChild(actions);
+    }
+    chatBox.appendChild(wrapper);
   }
   chatBox.scrollTop=chatBox.scrollHeight;
 }
+
+/* ═══════════════════════════════════════════
+   MODEL PICKER
+═══════════════════════════════════════════ */
+let pickerAberto=false;
+
+function togglePicker(e){
+  e.stopPropagation();
+  const picker=document.getElementById("model-picker");
+  pickerAberto=!pickerAberto;
+  if(pickerAberto){
+    picker.classList.add("open");
+    atualizarPickerLlamaItems();
+    atualizarPickerChecks();
+  } else {
+    picker.classList.remove("open");
+  }
+}
+
+function fecharPicker(){
+  document.getElementById("model-picker").classList.remove("open");
+  pickerAberto=false;
+}
+
+function atualizarPickerChecks(){
+  // Reseta todos os checks
+  ["claude","gemini","hpma"].forEach(m=>{
+    const el=document.getElementById("pick-check-"+m);
+    if(el)el.style.display=motorAtual===m?"inline":"none";
+  });
+  // Llama items
+  document.querySelectorAll("[data-llama-model]").forEach(btn=>{
+    const chk=btn.querySelector(".pi-check");
+    const active=motorAtual==="llama_local"&&btn.dataset.llamaModel===llamaModelId;
+    if(chk)chk.style.display=active?"inline":"none";
+    btn.classList.toggle("active",active);
+  });
+}
+
+function atualizarPickerLlamaItems(){
+  const container=document.getElementById("picker-llama-items");
+  if(!container)return;
+  const modelos=listarModelosLlama();
+  container.innerHTML=modelos.map(m=>{
+    const isLoaded=llamaPronto&&llamaModeloCarregado===m.id;
+    const isLoading=llamaCarregando&&llamaModelId===m.id;
+    const tagHtml=isLoaded?`<span class="pi-tag downloaded">Pronto</span>`:
+                  isLoading?`<span class="pi-tag loading">Baixando</span>`:
+                  `<span class="pi-tag" style="background:rgba(122,134,149,0.15);color:var(--muted)">Offline</span>`;
+    const isAtivo=motorAtual==="llama_local"&&llamaModelId===m.id;
+    return`<button class="picker-item${isAtivo?" active":""}" data-llama-model="${escapeHtml(m.id)}" onclick="selecionarLlamaPicker('${escapeHtml(m.id)}')">
+      <div class="pi-icon">⬡</div>
+      <div class="pi-info">
+        <div class="pi-name">${escapeHtml(m.label)}</div>
+        <div class="pi-desc">${escapeHtml(m.desc)}</div>
+      </div>
+      ${tagHtml}
+      <span class="pi-check" style="display:${isAtivo?"inline":"none"}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </span>
+    </button>`;
+  }).join("");
+}
+
+function selecionarMotorPicker(motor){
+  motorAtual=motor;
+  // Se não for llama, limpa o engine llama ativo
+  persistir();
+  atualizarBadgeMotor();
+  atualizarPickerChecks();
+  fecharPicker();
+  // Sincroniza config panel
+  const sel=document.getElementById("select-motor");
+  if(sel)sel.value=motor;
+  alterarMotor();
+}
+
+function selecionarLlamaPicker(modelId){
+  llamaModelId=modelId;
+  motorAtual="llama_local";
+  persistir();
+  atualizarBadgeMotor();
+  atualizarPickerLlamaItems();
+  atualizarPickerChecks();
+  // Se não tiver carregado, mostra aviso amigável
+  if(!llamaPronto||llamaModeloCarregado!==modelId){
+    fecharPicker();
+    abrirConfig();
+    // Seleciona tab llama na config
+    const sel=document.getElementById("select-motor");
+    if(sel){sel.value="llama_local";alterarMotor();}
+    const selM=document.getElementById("select-llama-model");
+    if(selM){selM.value=modelId;atualizarDescModeloLlama();}
+    return;
+  }
+  fecharPicker();
+}
+
+function atualizarBadgeMotor(){
+  const badge=document.getElementById("badge-motor");
+  if(!badge)return;
+  const labels={claude:"CLAUDE AI",gemini:"GEMINI",hpma:"NATIVO",llama_local:"LLAMA"};
+  let label=labels[motorAtual]||motorAtual.toUpperCase();
+  // Se llama, mostra modelo curto
+  if(motorAtual==="llama_local"){
+    const m=MODELOS_LLAMA_CURADOS.find(x=>x.id===llamaModelId);
+    if(m){
+      // Extrai tamanho do label (1B, 3B, 8B)
+      const sz=m.label.match(/\d+B/)?.[0];
+      label=sz?`LLAMA ${sz}`:"LLAMA";
+    }
+  }
+  badge.textContent=label;
+  badge.className="motor-badge"+(motorAtual==="claude"||motorAtual==="gemini"?" ai":"");
+}
+
+// Fecha picker ao clicar fora
+document.addEventListener("click",(e)=>{
+  if(pickerAberto&&!document.getElementById("model-picker-anchor").contains(e.target)){
+    fecharPicker();
+  }
+});
 
 /* ═══════════════════════════════════════════
    SIDEBAR & CHATS
@@ -1425,7 +1876,20 @@ function carregarChatAtual(){
       : "Pronto. Envie uma mensagem. Comece com \"Halzyn\" para nova conversa.";
     chatBox.appendChild(div);
   }else{
-    chat.messages.forEach(m=>adicionarMensagemDOM(m.texto,m.tipo));
+    // Adiciona mensagens com action buttons nas respostas da IA
+    chat.messages.forEach((m,idx)=>{
+      if(m.tipo==="ia"){
+        const wrapper=document.createElement("div");wrapper.className="msg-wrap ia";
+        const bubble=document.createElement("div");bubble.className="bubble";
+        bubble.textContent=m.texto;formatarCodigo(bubble,m.texto);
+        const actions=document.createElement("div");actions.className="msg-actions";
+        wrapper.appendChild(bubble);wrapper.appendChild(actions);
+        chatBox.appendChild(wrapper);
+        adicionarActionButtons(wrapper,m.texto,idx);
+      } else {
+        adicionarMensagemDOM(m.texto,m.tipo);
+      }
+    });
   }
   atualizarTitulo();chatBox.scrollTop=chatBox.scrollHeight;
 }
@@ -1471,11 +1935,7 @@ function alterarMotor(){
   document.getElementById("config-gemini").style.display=motorAtual==="gemini"?"block":"none";
   document.getElementById("config-llama").style.display=motorAtual==="llama_local"?"block":"none";
   if(motorAtual==="llama_local")popularSelectLlama();
-  // atualiza badge
-  const badge=document.getElementById("badge-motor");
-  const labels={claude:"CLAUDE AI",gemini:"GEMINI",hpma:"NATIVO",llama_local:"LLAMA"};
-  badge.textContent=labels[motorAtual]||motorAtual.toUpperCase();
-  badge.className="motor-badge"+(motorAtual==="claude"||motorAtual==="gemini"?" ai":"");
+  atualizarBadgeMotor();
 }
 
 function salvarConfigsLocais(){
@@ -1494,7 +1954,7 @@ function salvarNomeUsuario(){
 }
 
 function abrirConfig(){
-  fecharMenu();
+  fecharMenu();fecharPicker();
   renderizarMemoria();renderizarPessoas();
   document.getElementById("select-motor").value=motorAtual;
   document.getElementById("claude-api-key").value=claudeKey;
@@ -1583,7 +2043,7 @@ else{renderizarSidebarChats();carregarChatAtual();}
 
 const entrada=document.getElementById("entrada");
 entrada.addEventListener("keydown",(e)=>{
-  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviar();}
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleEnviarOuParar();}
 });
 entrada.addEventListener("input",()=>{
   entrada.style.height="38px";
@@ -1591,15 +2051,13 @@ entrada.addEventListener("input",()=>{
 });
 
 setEmocao(humor.estado);
-alterarMotor(); // aplica badge inicial
+atualizarBadgeMotor();
+atualizarPickerChecks();
 
 if("serviceWorker"in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 
-// Se o usuário marcou "carregar automaticamente", tenta inicializar o Llama
-// em segundo plano sem travar a interface (e sem popular o select ainda,
-// já que a tela de config nem está aberta).
 if(motorAtual==="llama_local"&&llamaAutoInit){
   window.addEventListener("load",()=>{
     setTimeout(async()=>{
@@ -1607,6 +2065,8 @@ if(motorAtual==="llama_local"&&llamaAutoInit){
         if(!window.webllm)return;
         webLlamaEngine=await window.webllm.CreateMLCEngine(llamaModelId,{initProgressCallback:()=>{}});
         llamaPronto=true;llamaModeloCarregado=llamaModelId;
+        atualizarPickerLlamaItems();
+        atualizarBadgeMotor();
       }catch(e){console.warn("Auto-init do Llama falhou:",e);}
     },300);
   });
