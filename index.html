@@ -597,16 +597,26 @@
           <input type="password" id="gemini-api-key" class="field" placeholder="Chave da API Gemini" oninput="salvarConfigsLocais()">
         </div>
         <div id="config-llama" style="display:none">
-          <p class="hint">Roda 100% no seu navegador via WebGPU. O modelo é baixado uma vez e fica em cache local.</p>
-          <select id="select-llama-model" class="field" onchange="aoTrocarModeloLlama()"></select>
-          <div id="llama-model-desc" class="model-desc"></div>
-          <div class="check-row">
-            <input type="checkbox" id="llama-auto-init" onchange="salvarAutoInitLlama()">
-            <label for="llama-auto-init">Carregar automaticamente ao abrir</label>
-          </div>
-          <button class="btn btn-primary" style="width:100%" id="btn-carregar-llama" onclick="carregarLlamaLocal()">Inicializar Llama</button>
+          <p class="hint">Roda 100% no seu navegador via WebGPU. <strong>Baixe uma vez, use para sempre</strong> — o modelo fica salvo localmente (Cache API do browser) e carrega offline.</p>
+
+          <!-- Lista de modelos com status de download -->
+          <div id="llama-model-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+
+          <!-- Barra de progresso de download -->
           <div class="progress-track" id="llama-progress-track"><div class="progress-fill" id="llama-progress-fill"></div></div>
+          <div id="llama-dl-info" style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:-4px 0 6px"></div>
+
+          <!-- Status + ação -->
           <div id="llama-status" class="hint"></div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="btn btn-primary" style="flex:1" id="btn-carregar-llama" onclick="carregarLlamaLocal()">Inicializar</button>
+            <button class="btn" style="flex:1" id="btn-apagar-llama" onclick="apagarModeloLlama()" title="Remove o modelo do cache do browser">Apagar do cache</button>
+          </div>
+
+          <div class="check-row" style="margin-top:8px">
+            <input type="checkbox" id="llama-auto-init" onchange="salvarAutoInitLlama()">
+            <label for="llama-auto-init">Inicializar automaticamente ao abrir</label>
+          </div>
         </div>
       </div>
 
@@ -654,8 +664,31 @@
 </div>
 
 <script type="module">
-  import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-  window.webllm = webllm;
+  // Tenta carregar WebLLM de múltiplos CDNs em cascata.
+  // O SW v5 vai cachear a resposta bem-sucedida, então na próxima
+  // visita (inclusive offline) o script já vem do cache do browser.
+  const WEBLLM_URLS = [
+    "https://esm.run/@mlc-ai/web-llm",
+    "https://esm.sh/@mlc-ai/web-llm",
+    "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/+esm",
+  ];
+
+  async function loadWebLLM() {
+    for (const url of WEBLLM_URLS) {
+      try {
+        const mod = await import(url);
+        window.webllm = mod;
+        window.dispatchEvent(new Event("webllm-ready"));
+        return;
+      } catch (e) {
+        console.warn("[Halzyn] WebLLM falhou em", url, e.message);
+      }
+    }
+    // Todos falharam — app funciona sem Llama (motores cloud e nativo ok)
+    window.dispatchEvent(new Event("webllm-failed"));
+  }
+
+  loadWebLLM();
 </script>
 
 <script>
@@ -1191,13 +1224,54 @@ let webLlamaEngine=null;
 let llamaCarregando=false;
 let llamaModeloCarregado=null;
 
+/* ═══════════════════════════════════════════
+   LLAMA LOCAL — modelos e cache
+═══════════════════════════════════════════ */
 const MODELOS_LLAMA_CURADOS=[
-  {id:"Llama-3.2-1B-Instruct-q4f16_1-MLC", label:"Ultrarrápido — 1B (~0,9 GB)", desc:"O mais leve. Ideal para celulares. Respostas curtas e diretas."},
-  {id:"Llama-3.2-3B-Instruct-q4f16_1-MLC", label:"Equilibrado — 3B (~2,2 GB)", desc:"Bom meio-termo. Português nativo. Para smartphones com >3 GB RAM livre."},
-  {id:"Qwen2.5-3B-Instruct-q4f16_1-MLC", label:"Alternativo — 3B (~2,2 GB)", desc:"Alternativa ao Llama 3B, mais falante."},
-  {id:"Llama-3.1-8B-Instruct-q4f32_1-MLC", label:"Mais inteligente — 8B (~6 GB)", desc:"Respostas ricas. Precisa de GPU/RAM bons e download grande."},
-  {id:"Hermes-3-Llama-3.1-8B-q4f16_1-MLC", label:"Expressivo — 8B (~5 GB)", desc:"Conversas naturais e criativas. Para desktops com GPU dedicada."},
+  {
+    id:"Llama-3.2-1B-Instruct-q4f16_1-MLC",
+    label:"Ultrarrápido — Llama 1B",
+    tamanho:"~0,9 GB",
+    desc:"Ideal para celulares e PCs fracos. Respostas curtas e diretas.",
+    maxCtx:4, maxTok:256, temp:0.65
+  },
+  {
+    id:"Llama-3.2-3B-Instruct-q4f16_1-MLC",
+    label:"Equilibrado — Llama 3B",
+    tamanho:"~2,2 GB",
+    desc:"Bom meio-termo. Português nativo. Para smartphones com >3 GB RAM livre.",
+    maxCtx:8, maxTok:512, temp:0.75
+  },
+  {
+    id:"Qwen2.5-3B-Instruct-q4f16_1-MLC",
+    label:"Alternativo — Qwen 3B",
+    tamanho:"~2,2 GB",
+    desc:"Mais expressivo que o Llama 3B, boa cobertura de PT-BR.",
+    maxCtx:8, maxTok:512, temp:0.75
+  },
+  {
+    id:"Llama-3.1-8B-Instruct-q4f32_1-MLC",
+    label:"Inteligente — Llama 8B",
+    tamanho:"~6 GB",
+    desc:"Respostas ricas e contextualizadas. Precisa de GPU dedicada ou RAM ≥8 GB.",
+    maxCtx:14, maxTok:700, temp:0.85
+  },
+  {
+    id:"Hermes-3-Llama-3.1-8B-q4f16_1-MLC",
+    label:"Expressivo — Hermes 8B",
+    tamanho:"~5 GB",
+    desc:"Conversas naturais e criativas. Recomendado para desktop com GPU.",
+    maxCtx:14, maxTok:700, temp:0.88
+  },
 ];
+
+// Cache de status de download dos modelos (verificado ao abrir a tela)
+// { modelId: "downloaded" | "partial" | "none" }
+let modelCacheStatus = {};
+
+function getModeloInfo(id){
+  return MODELOS_LLAMA_CURADOS.find(m=>m.id===id)||MODELOS_LLAMA_CURADOS[0];
+}
 
 function modelosDisponiveisWebllm(){
   try{
@@ -1214,34 +1288,91 @@ function listarModelosLlama(){
   return validos.length?validos:MODELOS_LLAMA_CURADOS;
 }
 
+/* Verifica no Cache API do browser quais modelos já foram baixados.
+   O WebLLM salva os arquivos em caches cujos nomes contêm o model_id. */
+async function verificarModelosCached(){
+  if(!('caches' in window))return;
+  try{
+    const cacheNames = await caches.keys();
+    for(const m of MODELOS_LLAMA_CURADOS){
+      // Procura por qualquer cache que mencione o model_id
+      const temCache = cacheNames.some(n => n.includes(m.id) || n.includes('webllm'));
+      if(temCache){
+        // Verifica se tem pelo menos um arquivo do modelo cacheado
+        for(const cn of cacheNames){
+          try{
+            const c = await caches.open(cn);
+            const keys = await c.keys();
+            const temArquivo = keys.some(r => r.url.includes(m.id));
+            if(temArquivo){ modelCacheStatus[m.id]="downloaded"; break; }
+          }catch{}
+        }
+      }
+      if(!modelCacheStatus[m.id]) modelCacheStatus[m.id]="none";
+    }
+  }catch(e){
+    console.warn("[Halzyn] Erro ao verificar cache de modelos:", e);
+  }
+}
+
+/* Renderiza a lista de modelos no painel de config com status visual */
+function renderizarModelosList(){
+  const container = document.getElementById("llama-model-list");
+  if(!container) return;
+  const modelos = listarModelosLlama();
+  container.innerHTML = modelos.map(m=>{
+    const status = modelCacheStatus[m.id] || "none";
+    const ativo = llamaModelId === m.id;
+    const carregado = llamaPronto && llamaModeloCarregado === m.id;
+
+    let statusBadge;
+    if(carregado){
+      statusBadge=`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(122,170,138,0.18);color:var(--ok)">● Em uso</span>`;
+    } else if(status==="downloaded"){
+      statusBadge=`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(122,170,138,0.12);color:var(--ok)">Baixado</span>`;
+    } else if(llamaCarregando && ativo){
+      statusBadge=`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(201,176,112,0.15);color:var(--warn)">Baixando…</span>`;
+    } else {
+      statusBadge=`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted)">${m.tamanho}</span>`;
+    }
+
+    return`<div style="
+      border:1px solid ${ativo?'var(--accent)':'var(--line)'};
+      border-radius:10px;padding:10px 12px;
+      background:${ativo?'var(--accent-dim)':'var(--surface)'};
+      cursor:pointer;transition:border-color 0.15s,background 0.15s"
+      onclick="selecionarModeloLlamaConfig('${escapeHtml(m.id)}')"
+    >
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="font-size:13px;font-weight:600;color:${ativo?'var(--accent-2)':'var(--text)'}">${escapeHtml(m.label)}</span>
+        ${statusBadge}
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4">${escapeHtml(m.desc)}</div>
+    </div>`;
+  }).join("");
+}
+
+function selecionarModeloLlamaConfig(id){
+  const anterior = llamaModelId;
+  llamaModelId = id;
+  persistir();
+  if(anterior !== id && llamaModeloCarregado && llamaModeloCarregado !== id){
+    // Modelo trocado — motor fica em llama_local mas precisa inicializar
+    webLlamaEngine=null;llamaPronto=false;llamaModeloCarregado=null;
+  }
+  renderizarModelosList();
+  atualizarStatusLlamaUI();
+  atualizarPickerLlamaItems();
+  atualizarBadgeMotor();
+}
+
 function popularSelectLlama(){
-  const sel=document.getElementById("select-llama-model");
-  if(!sel)return;
   const modelos=listarModelosLlama();
   const atual=modelos.some(m=>m.id===llamaModelId)?llamaModelId:modelos[0].id;
   llamaModelId=atual;
-  sel.innerHTML=modelos.map(m=>`<option value="${m.id}">${escapeHtml(m.label)}</option>`).join("");
-  sel.value=llamaModelId;
-  atualizarDescModeloLlama();
   document.getElementById("llama-auto-init").checked=!!llamaAutoInit;
+  verificarModelosCached().then(()=>renderizarModelosList());
   atualizarStatusLlamaUI();
-}
-
-function atualizarDescModeloLlama(){
-  const modelos=listarModelosLlama();
-  const m=modelos.find(x=>x.id===llamaModelId);
-  document.getElementById("llama-model-desc").textContent=m?m.desc:"";
-}
-
-function aoTrocarModeloLlama(){
-  llamaModelId=document.getElementById("select-llama-model").value;
-  persistir();
-  atualizarDescModeloLlama();
-  if(llamaModeloCarregado&&llamaModeloCarregado!==llamaModelId){
-    webLlamaEngine=null;llamaPronto=false;llamaModeloCarregado=null;
-  }
-  atualizarStatusLlamaUI();
-  atualizarPickerLlamaItems();
 }
 
 function salvarAutoInitLlama(){
@@ -1251,14 +1382,22 @@ function salvarAutoInitLlama(){
 
 function atualizarStatusLlamaUI(){
   const status=document.getElementById("llama-status");
+  const btnApagar=document.getElementById("btn-apagar-llama");
   if(!status)return;
+
+  const cached = modelCacheStatus[llamaModelId]==="downloaded";
+
   if(llamaPronto&&llamaModeloCarregado===llamaModelId){
-    status.innerHTML=`<span class="status-ok">● Pronto — ${escapeHtml(llamaModelId)}</span>`;
+    status.innerHTML=`<span class="status-ok">● Em uso: ${escapeHtml(getModeloInfo(llamaModelId).label)}</span>`;
   }else if(llamaCarregando){
-    status.innerHTML=`<span class="status-warn">Carregando…</span>`;
+    status.innerHTML=`<span class="status-warn">⬇ Baixando modelo…</span>`;
+  }else if(cached){
+    status.innerHTML=`<span class="status-ok">✓ Modelo em cache — pode usar offline</span>`;
   }else{
-    status.textContent="Ainda não inicializado.";
+    status.innerHTML=`<span style="color:var(--muted)">Não inicializado. Clique em Inicializar para baixar e carregar.</span>`;
   }
+
+  if(btnApagar) btnApagar.disabled = !cached;
 }
 
 async function carregarLlamaLocal(){
@@ -1266,27 +1405,62 @@ async function carregarLlamaLocal(){
   const status=document.getElementById("llama-status");
   const track=document.getElementById("llama-progress-track");
   const fill=document.getElementById("llama-progress-fill");
+  const dlInfo=document.getElementById("llama-dl-info");
   const btn=document.getElementById("btn-carregar-llama");
-  llamaModelId=document.getElementById("select-llama-model").value;
-  persistir();
+
   if(!navigator.gpu){
-    status.innerHTML=`<span class="status-err">Este navegador não expõe WebGPU. Use Chrome/Edge atualizado (desktop).</span>`;
+    status.innerHTML=`<span class="status-err">WebGPU não disponível. Use Chrome/Edge atualizado em desktop.</span>`;
     return;
   }
-  llamaCarregando=true;btn.disabled=true;track.classList.add("active");fill.style.width="0%";
-  status.innerHTML=`<span class="status-warn">Inicializando…</span>`;
+  if(!window.webllm){
+    status.innerHTML=`<span class="status-err">Biblioteca WebLLM não carregou. Verifique a conexão com a internet.</span>`;
+    return;
+  }
+
+  llamaCarregando=true;btn.disabled=true;
+  track.classList.add("active");fill.style.width="0%";
+  if(dlInfo)dlInfo.innerHTML="";
+
+  let ultimoTexto="";
+  let dlIniciado=false;
+  let bytesTotal=0;
+
   try{
-    if(!window.webllm){status.innerHTML=`<span class="status-err">Biblioteca WebLLM não carregou (verifique sua internet).</span>`;return;}
     webLlamaEngine=await window.webllm.CreateMLCEngine(llamaModelId,{
       initProgressCallback:(r)=>{
-        status.innerHTML=`<span class="status-warn">${escapeHtml(r.text||"Carregando…")}</span>`;
-        if(typeof r.progress==="number")fill.style.width=Math.round(r.progress*100)+"%";
+        const pct = typeof r.progress==="number" ? Math.round(r.progress*100) : null;
+        if(pct!==null) fill.style.width=pct+"%";
+
+        // Detecta se está baixando ou carregando do cache
+        const txt = r.text||"";
+        if(!dlIniciado && /fetch|download|loading/i.test(txt)) dlIniciado=true;
+
+        // Estimativa de velocidade
+        if(r.timeElapsed && r.progress && dlInfo){
+          const pctN = r.progress;
+          const infoTxt = dlIniciado
+            ? `${pct||0}% — ${dlIniciado?"baixando":"carregando do cache"}…`
+            : `${pct||0}% — carregando do cache local…`;
+          if(dlInfo) dlInfo.innerHTML=`<span>${infoTxt}</span><span>${r.timeElapsed?Math.round(r.timeElapsed)+"s":"—"}</span>`;
+        }
+
+        if(txt && txt !== ultimoTexto){
+          ultimoTexto=txt;
+          status.innerHTML=`<span class="status-warn">${escapeHtml(txt.substring(0,80))}</span>`;
+        }
+        renderizarModelosList();
         atualizarPickerLlamaItems();
       }
     });
     llamaPronto=true;llamaModeloCarregado=llamaModelId;
     fill.style.width="100%";
+    if(dlInfo) dlInfo.innerHTML=`<span class="status-ok">✓ Pronto</span><span></span>`;
+
+    // Marca como baixado no cache status
+    modelCacheStatus[llamaModelId]="downloaded";
+
     atualizarStatusLlamaUI();
+    renderizarModelosList();
     atualizarPickerLlamaItems();
     atualizarBadgeMotor();
   }catch(err){
@@ -1294,76 +1468,138 @@ async function carregarLlamaLocal(){
     llamaPronto=false;
     const msg=String(err?.message||err);
     if(/out of memory|oom/i.test(msg))
-      status.innerHTML=`<span class="status-err">Sem memória de GPU suficiente. Tente um modelo menor.</span>`;
+      status.innerHTML=`<span class="status-err">Sem memória de GPU suficiente. Tente o modelo 1B ou 3B.</span>`;
+    else if(/network|fetch|load/i.test(msg))
+      status.innerHTML=`<span class="status-err">Falha de rede ao baixar o modelo. Verifique a conexão.</span>`;
     else
-      status.innerHTML=`<span class="status-err">Falha ao carregar: ${escapeHtml(msg)}</span>`;
+      status.innerHTML=`<span class="status-err">Falha: ${escapeHtml(msg.substring(0,120))}</span>`;
+    renderizarModelosList();
   }finally{
     llamaCarregando=false;btn.disabled=false;
-    setTimeout(()=>{if(!llamaCarregando)track.classList.remove("active");},600);
+    setTimeout(()=>{if(!llamaCarregando)track.classList.remove("active");},1200);
   }
 }
 
-// System prompt otimizado para modelos pequenos — mais curto = menos tokens = resposta mais rápida
-function systemPromptLlama(){
-  const nome=usuario.nome?usuario.nome:null;
-  const exemplos=bancoDeDados.filter(x=>x.emocao===humor.estado).slice(-3);
-  const pool=exemplos.length?exemplos:bancoDeDados.slice(-3);
-  const blocoExemplos=pool.map(x=>`U: ${x.frase}\nH: ${x.resposta}`).join("\n\n");
+/* Remove o modelo do cache do browser para liberar espaço */
+async function apagarModeloLlama(){
+  if(!confirm(`Apagar "${getModeloInfo(llamaModelId).label}" do cache local?\nEle terá que ser baixado novamente no próximo uso.`))return;
+  const status=document.getElementById("llama-status");
+  status.innerHTML=`<span class="status-warn">Apagando…</span>`;
 
-  // Prompt compacto — menos tokens para modelos 1B/3B processarem
-  return`Você é Halzyn, assistente pessoal brasileira. Responda SEMPRE em português do Brasil. NUNCA em inglês.
-Tom: direto, curto, sem enrolação, sem emojis, sem disclaimers, sem repetir a pergunta.
-Humor: ${humor.estado} (hostilidade ${humor.hostilidade}/20).
-${nome?`Falando com: ${nome}.`:"Você ainda não sabe o nome da pessoa."}
-Data: ${new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.
-Pessoas: ${contextoPessoas()}
-Exemplos de estilo:\n${blocoExemplos||"(sem exemplos)"}
-Regra: Responda só em português brasileiro. Seja breve.`;
+  // Para o engine se estiver rodando este modelo
+  if(llamaModeloCarregado===llamaModelId){
+    webLlamaEngine=null;llamaPronto=false;llamaModeloCarregado=null;
+  }
+
+  try{
+    const cacheNames = await caches.keys();
+    let apagou=0;
+    for(const cn of cacheNames){
+      const c = await caches.open(cn);
+      const keys = await c.keys();
+      for(const req of keys){
+        if(req.url.includes(llamaModelId)){
+          await c.delete(req);
+          apagou++;
+        }
+      }
+    }
+    modelCacheStatus[llamaModelId]="none";
+    status.innerHTML=`<span class="status-ok">✓ ${apagou} arquivo(s) removidos do cache.</span>`;
+  }catch(e){
+    status.innerHTML=`<span class="status-err">Erro ao apagar: ${escapeHtml(String(e.message))}</span>`;
+  }
+  renderizarModelosList();
+  atualizarPickerLlamaItems();
+  atualizarBadgeMotor();
+}
+
+/* ── System prompt Llama (compacto por modelo) ── */
+function systemPromptLlama(){
+  const info = getModeloInfo(llamaModelId);
+  const nome = usuario.nome || null;
+  // Exemplos de estilo — menos exemplos para modelos pequenos
+  const nEx = info.maxCtx<=4 ? 2 : 3;
+  const pool = (bancoDeDados.filter(x=>x.emocao===humor.estado).slice(-nEx).length >= nEx)
+    ? bancoDeDados.filter(x=>x.emocao===humor.estado).slice(-nEx)
+    : bancoDeDados.slice(-nEx);
+  const ex = pool.map(x=>`U:${x.frase}\nH:${x.resposta}`).join("\n");
+
+  // INSTRUÇÃO DUPLA em PT e EN para garantir que modelo pequeno entenda
+  return `[SYSTEM] You MUST reply in Brazilian Portuguese (pt-BR). Never reply in English.
+[SISTEMA] Você é Halzyn. Responda SEMPRE em português do Brasil. PROIBIDO responder em inglês.
+Humor: ${humor.estado}. Hostilidade: ${humor.hostilidade}/20.
+${nome?`Pessoa: ${nome}.`:""}Data: ${new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.
+Contexto: ${contextoPessoas()}
+Estilo (não repita literalmente):\n${ex||"(sem exemplos)"}
+REGRAS: português brasileiro, direto, sem emojis, sem repetir a pergunta.`;
 }
 
 let currentAbortController = null;
 
 async function chamarLlama(prompt, historico, onToken, abortSignal){
-  if(!webLlamaEngine||!llamaPronto)return"Inicialize o Llama em Memória e sistema antes de usar esse motor.";
+  if(!webLlamaEngine||!llamaPronto){
+    return "Inicialize o Llama em Memória e sistema antes de usar.";
+  }
 
-  // Limita histórico a 6 mensagens para modelos pequenos — menos contexto = mais rápido
-  const maxHist = (llamaModelId.includes("1B") || llamaModelId.includes("3B")) ? 6 : 12;
+  const info = getModeloInfo(llamaModelId);
   const messages=[{role:"system",content:systemPromptLlama()}];
-  (historico||[]).slice(-maxHist).forEach(m=>{
+
+  // Histórico limitado por modelo: 1B usa 4 msgs, 3B usa 8, 8B usa 14
+  (historico||[]).slice(-info.maxCtx).forEach(m=>{
     if(m.tipo==="jogador"||m.tipo==="ia")
       messages.push({role:m.tipo==="jogador"?"user":"assistant",content:m.texto});
   });
   messages.push({role:"user",content:prompt});
 
-  // Parâmetros ajustados por tamanho de modelo
-  const is1B = llamaModelId.includes("1B");
-  const maxTok = is1B ? 300 : 600; // 1B = resposta curta, suficiente para o que pode fazer
-  const temp = is1B ? 0.7 : 0.85;
-
   try{
     const stream=await webLlamaEngine.chat.completions.create({
       messages,
-      temperature: temp,
+      temperature: info.temp,
       top_p: 0.9,
-      max_tokens: maxTok,
+      frequency_penalty: 0.15, // reduz repetição
+      max_tokens: info.maxTok,
       stream: true
     });
+
     let full="";
+    let rafId=null;
+    let pendente="";
+    const chatBox=document.getElementById("chat-box");
+
+    // Usa requestAnimationFrame para flushar tokens no mobile sem travar UI
+    const flush=()=>{
+      if(pendente&&onToken){ onToken(pendente); pendente=""; }
+      if(chatBox) chatBox.scrollTop=chatBox.scrollHeight;
+      rafId=null;
+    };
+
     for await(const chunk of stream){
-      if(abortSignal?.aborted)break;
+      if(abortSignal?.aborted) break;
       const delta=chunk.choices?.[0]?.delta?.content||"";
-      if(delta){full+=delta;if(onToken)onToken(delta);}
+      if(delta){
+        full+=delta;
+        pendente+=delta;
+        if(!rafId) rafId=requestAnimationFrame(flush);
+      }
     }
-    // Limpa respostas em inglês ou idiomas errados que modelos pequenos às vezes geram
-    if(full && /^[A-Za-z\s,.!?'"-]{20,}$/.test(full.trim().split("\n")[0])){
-      // A primeira linha parece inglês — descarta e tenta de novo com aviso
-      return"[Resposta gerada em outro idioma — tente reformular ou use um modelo maior.]";
+    // Flush final
+    if(rafId){ cancelAnimationFrame(rafId); flush(); }
+
+    // Detecção de resposta em inglês: se >60% dos primeiros 80 chars são ASCII puro
+    const primeiros = full.trim().slice(0,80);
+    const asciiCount = (primeiros.match(/[A-Za-z\s]/g)||[]).length;
+    if(asciiCount/Math.max(primeiros.length,1) > 0.85 && primeiros.length > 20){
+      return "[O modelo respondeu em inglês. Tente reformular sua pergunta em português ou use um modelo maior.]";
     }
+
     return full.trim()||"…";
   }catch(err){
-    if(err.name==="AbortError"||abortSignal?.aborted)return null;
-    console.error(err);
-    return"O modelo local travou. Tente de novo ou escolha um modelo menor.";
+    if(err.name==="AbortError"||abortSignal?.aborted) return null;
+    console.error("[Halzyn] Llama erro:", err);
+    if(/out of memory|oom/i.test(String(err)))
+      return "Sem memória suficiente. Feche outras abas e tente um modelo menor.";
+    return "O modelo travou ao gerar. Tente novamente ou use um modelo menor.";
   }
 }
 
@@ -1962,6 +2198,13 @@ function abrirConfig(){
   document.getElementById("nome-usuario").value=usuario.nome||"";
   alterarMotor();
   document.getElementById("tela-config").style.display="flex";
+  // Ao abrir config com Llama selecionado, verifica status de cache dos modelos
+  if(motorAtual==="llama_local"){
+    verificarModelosCached().then(()=>{
+      renderizarModelosList();
+      atualizarStatusLlamaUI();
+    });
+  }
 }
 function fecharConfig(){document.getElementById("tela-config").style.display="none";}
 function abrirMenu(){document.getElementById("rail").classList.add("open");document.getElementById("overlay").classList.add("open");}
@@ -2054,22 +2297,64 @@ setEmocao(humor.estado);
 atualizarBadgeMotor();
 atualizarPickerChecks();
 
+/* Registra Service Worker para suporte offline */
 if("serviceWorker"in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js")
+      .then(reg=>console.log("[SW] Registrado, scope:", reg.scope))
+      .catch(e=>console.warn("[SW] Falha ao registrar:", e));
+  });
 }
 
-if(motorAtual==="llama_local"&&llamaAutoInit){
-  window.addEventListener("load",()=>{
-    setTimeout(async()=>{
-      try{
-        if(!window.webllm)return;
-        webLlamaEngine=await window.webllm.CreateMLCEngine(llamaModelId,{initProgressCallback:()=>{}});
-        llamaPronto=true;llamaModeloCarregado=llamaModelId;
+/* Quando o WebLLM carregar (via evento do module loader) */
+window.addEventListener("webllm-ready", ()=>{
+  console.log("[Halzyn] WebLLM pronto");
+  // Atualiza lista de modelos disponíveis no picker e config
+  atualizarPickerLlamaItems();
+  // Se a tela de config estiver aberta na aba Llama, atualiza
+  if(document.getElementById("config-llama").style.display!=="none"){
+    verificarModelosCached().then(()=>renderizarModelosList());
+  }
+  // Auto-init se configurado
+  if(motorAtual==="llama_local" && llamaAutoInit){
+    _autoInitLlama();
+  }
+});
+
+window.addEventListener("webllm-failed", ()=>{
+  console.warn("[Halzyn] WebLLM não carregou — Llama indisponível nesta sessão");
+  // Se o motor atual for llama e a lib não carregou, não trava o app
+  if(motorAtual==="llama_local"){
+    // Exibe aviso sutil no badge
+    const badge=document.getElementById("badge-motor");
+    if(badge) badge.title="Biblioteca WebLLM não carregou. Verifique a conexão.";
+  }
+});
+
+async function _autoInitLlama(){
+  if(!window.webllm || !navigator.gpu) return;
+  try{
+    console.log("[Halzyn] Auto-init Llama:", llamaModelId);
+    webLlamaEngine=await window.webllm.CreateMLCEngine(llamaModelId,{
+      initProgressCallback:(r)=>{
+        // Atualiza progresso silenciosamente (sem abrir config)
+        const pct = typeof r.progress==="number" ? Math.round(r.progress*100) : null;
         atualizarPickerLlamaItems();
-        atualizarBadgeMotor();
-      }catch(e){console.warn("Auto-init do Llama falhou:",e);}
-    },300);
-  });
+        if(pct===100||r.progress===1){
+          modelCacheStatus[llamaModelId]="downloaded";
+        }
+      }
+    });
+    llamaPronto=true;
+    llamaModeloCarregado=llamaModelId;
+    modelCacheStatus[llamaModelId]="downloaded";
+    atualizarPickerLlamaItems();
+    atualizarBadgeMotor();
+    atualizarStatusLlamaUI();
+    console.log("[Halzyn] Llama pronto via auto-init");
+  }catch(e){
+    console.warn("[Halzyn] Auto-init falhou:", e);
+  }
 }
 </script>
 </body>
